@@ -9,10 +9,15 @@ import {
   Plus,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
 
 const CollectionDetails = () => {
   const [quantity, setQuantity] = useState(1);
   const [liked, setLiked] = useState(false);
+
+  const account = useAccount();
+  const { openConnectModal } = useConnectModal();
 
   const decreaseQuantity = () => {
     if (quantity > 1) setQuantity(quantity - 1);
@@ -20,6 +25,24 @@ const CollectionDetails = () => {
 
   const increaseQuantity = () => {
     if (quantity < 8) setQuantity(quantity + 1);
+  };
+
+  const handlePurchase = () => {
+    if (!account.address && openConnectModal) {
+      openConnectModal();
+    } else {
+      // Proceed with purchase logic here
+      alert("Processing purchase for " + quantity + " NFTs!");
+    }
+  };
+
+  const handleMakeOffer = () => {
+    if (!account.address && openConnectModal) {
+      openConnectModal();
+    } else {
+      // Proceed with offer logic here
+      alert("Creating an offer for Turtle Timepiece Genesis!");
+    }
   };
 
   return (
@@ -135,10 +158,16 @@ const CollectionDetails = () => {
               </div>
 
               <div className="flex gap-4">
-                <button className="flex-1 bg-[#00BCD4] hover:bg-[#00ACC1] text-white font-medium py-3 px-6 rounded-lg transition-colors">
+                <button
+                  onClick={handlePurchase}
+                  className="flex-1 bg-[#00BCD4] hover:bg-[#00ACC1] text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                >
                   Buy Now (1.45 ETH)
                 </button>
-                <button className="flex-1 bg-white/5 hover:bg-white/10 text-white font-medium py-3 px-6 rounded-lg border border-white/10 transition-colors">
+                <button
+                  onClick={handleMakeOffer}
+                  className="flex-1 bg-white/5 hover:bg-white/10 text-white font-medium py-3 px-6 rounded-lg border border-white/10 transition-colors"
+                >
                   Make Offer
                 </button>
               </div>

@@ -19,7 +19,7 @@ function App() {
               </main>
             }
           />
-          <Route path="/collections/" element={<CollectionDetails />} />
+          <Route path="/collections" element={<CollectionDetails />} />
         </Routes>
         <Footer />
       </div>

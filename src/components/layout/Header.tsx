@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import LoginModal from "../auth/LoginModal";
 
 const Header = () => {
@@ -37,14 +38,19 @@ const Header = () => {
             >
               Login
             </button>
-            <button className="bg-[#0B1120] text-white px-6 py-2 rounded-full hover:bg-[#162236] transition-colors">
-              Connect Wallet
-            </button>
+            <ConnectButton
+              chainStatus="icon"
+              showBalance={false}
+              accountStatus={{
+                smallScreen: "avatar",
+                largeScreen: "full",
+              }}
+            />
           </div>
         </div>
       </header>
 
-      {/* Login Modal */}
+      {/* Modals */}
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
