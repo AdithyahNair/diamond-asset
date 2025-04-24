@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import LoginModal from "../auth/LoginModal";
 
 const Header = () => {
@@ -9,23 +10,23 @@ const Header = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 py-5">
         <div className="container mx-auto px-4 md:px-8 lg:px-20 xl:px-24 flex items-center justify-between">
           <div className="flex items-center">
-            <a href="/" className="h-[36px]">
+            <Link to="/" className="h-[36px]">
               <img
                 src="/images/aquaduct.png"
                 alt="Aquaduct"
                 className="h-full w-auto"
               />
-            </a>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center">
-            <a
-              href="#collections"
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link
+              to="/collections"
               className="px-5 text-gray-700 hover:text-[#004B71] font-medium transition-colors"
             >
               Collections
-            </a>
+            </Link>
           </nav>
 
           {/* Desktop Actions */}

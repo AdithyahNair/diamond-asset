@@ -1,21 +1,29 @@
 import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/layout/Header";
 import Hero from "./components/sections/Hero";
 import Footer from "./components/layout/Footer";
-// Note: The actual RainbowKit provider would be imported here,
-// but we're keeping it simple for now since there were API compatibility issues
+import CollectionDetails from "./components/sections/CollectionDetails";
 
 function App() {
   return (
-    // Note: In a complete implementation, we would wrap this with:
-    // <RainbowKitProvider>...</RainbowKitProvider>
-    <div className="min-h-screen bg-[#0B1120] text-white overflow-x-hidden">
-      <Header />
-      <main>
-        <Hero />
-      </main>
-      <Footer />
-    </div>
+    <Router>
+      <div className="min-h-screen bg-[#0B1120] text-white overflow-x-hidden">
+        <Header />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <main>
+                <Hero />
+              </main>
+            }
+          />
+          <Route path="/collections/" element={<CollectionDetails />} />
+        </Routes>
+        <Footer />
+      </div>
+    </Router>
   );
 }
 
