@@ -311,7 +311,7 @@ const CollectionDetails: React.FC = () => {
       <div className="min-h-screen bg-[#0B1120] pt-24 pb-16">
         <div className="container mx-auto px-4 md:px-8 lg:px-20 xl:px-24">
           <Link
-            to="/"
+            to="/browse-collections"
             className="inline-flex items-center text-gray-400 hover:text-white mb-8"
           >
             <ArrowLeft size={20} className="mr-2" />

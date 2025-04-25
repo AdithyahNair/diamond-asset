@@ -4,6 +4,7 @@ import Header from "./components/layout/Header";
 import Hero from "./components/sections/Hero";
 import Footer from "./components/layout/Footer";
 import CollectionDetails from "./components/sections/CollectionDetails";
+import CollectionsList from "./components/sections/CollectionsList";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             }
           />
           <Route path="/collections" element={<CollectionDetails />} />
+          <Route path="/browse-collections" element={<CollectionsList />} />
         </Routes>
         <Footer />
       </div>

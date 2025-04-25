@@ -29,7 +29,7 @@ const Header = () => {
                 />
               </Link>
               <Link
-                to="/collections"
+                to="/browse-collections"
                 className="text-gray-200 hover:text-[#1E9AD3] font-medium transition-colors relative group"
               >
                 Collections
