@@ -372,7 +372,7 @@ const CollectionDetails: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-[#0B1120] pt-24 pb-16">
+      <div className="min-h-screen bg-[#0B1120] pt-32 pb-16">
         <div className="container mx-auto px-4 md:px-8 lg:px-20 xl:px-24">
           <Link
             to="/browse-collections"
