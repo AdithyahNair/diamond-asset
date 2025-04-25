@@ -251,6 +251,19 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                     <p className="text-white font-semibold mt-1">
                       {item.price} ETH
                     </p>
+
+                    {item.image?.endsWith(".mp4") && (
+                      <button
+                        className="mt-2 px-3 py-1 text-xs rounded-md bg-[#1E9AD3]/10 text-[#1E9AD3] hover:bg-[#1E9AD3]/20 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Open a larger view of the video or item
+                          window.open(item.image, "_blank");
+                        }}
+                      >
+                        View NFT
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
