@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ArrowLeft,
   Eye,
@@ -7,45 +7,240 @@ import {
   RefreshCw,
   Minus,
   Plus,
+  ShoppingCart,
+  AlertCircle,
+  Check,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import AuthModal from "../auth/AuthModal";
+import { purchaseNFT } from "../../lib/ethereum";
+import { getAvailableNfts } from "../../lib/nftContract";
 
-const CollectionDetails = () => {
+// ETH price values
+const ETH_PRICE_USD = 0.001; // Price in ETH (0.001 ETH ≈ $2 at ~$2000/ETH)
+const USD_PRICE = 2; // USD equivalent (approximate)
+
+// NFT item ID
+const NFT_ITEM_ID = "turtle-timepiece-genesis";
+
+const CollectionDetails: React.FC = () => {
   const [quantity, setQuantity] = useState(1);
   const [liked, setLiked] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [availableNfts, setAvailableNfts] = useState<number>(8);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
+  const [availableAccounts, setAvailableAccounts] = useState<string[]>([]);
+  const [isAccountSelectionOpen, setIsAccountSelectionOpen] = useState(false);
+  const [networkName, setNetworkName] = useState<string>("Unknown");
 
-  const { isFullyAuthenticated, user } = useAuth();
-  const { addToCart, setIsCartOpen } = useCart();
+  const { isFullyAuthenticated, user, isWalletConnected } = useAuth();
+  const { addToCart, setIsCartOpen, hasItemInCart } = useCart();
+
+  const isInCart = hasItemInCart(NFT_ITEM_ID);
+
+  // Check available NFTs
+  useEffect(() => {
+    if (window.ethereum) {
+      const checkAvailableNfts = async () => {
+        try {
+          const provider = new (
+            window as unknown
+          ).ethers.providers.Web3Provider(window.ethereum);
+          const available = await getAvailableNfts(provider);
+          setAvailableNfts(available);
+        } catch (error) {
+          console.error("Error checking available NFTs:", error);
+        }
+      };
+
+      checkAvailableNfts();
+    }
+  }, []);
+
+  // Add this function to load available accounts
+  const loadAccounts = async () => {
+    try {
+      if (!window.ethereum) return;
+
+      const accounts = await window.ethereum.request({
+        method: "eth_accounts",
+      });
+
+      setAvailableAccounts(accounts);
+
+      // Auto-select the first account if available
+      if (accounts.length > 0 && !selectedAccount) {
+        setSelectedAccount(accounts[0]);
+      }
+    } catch (error) {
+      console.error("Error loading accounts:", error);
+    }
+  };
+
+  // Call loadAccounts when wallet is connected
+  useEffect(() => {
+    if (isWalletConnected) {
+      loadAccounts();
+
+      // Listen for account changes
+      if (window.ethereum) {
+        window.ethereum.on("accountsChanged", (accounts: string[]) => {
+          setAvailableAccounts(accounts);
+          setSelectedAccount(accounts.length > 0 ? accounts[0] : null);
+        });
+      }
+    }
+  }, [isWalletConnected]);
+
+  // Add function to check current network
+  const checkCurrentNetwork = async () => {
+    try {
+      if (!window.ethereum) return;
+
+      const chainId = await window.ethereum.request({ method: "eth_chainId" });
+
+      // Map chain IDs to network names
+      const networks: Record<string, string> = {
+        "0x1": "Ethereum Mainnet",
+        "0xaa36a7": "Sepolia Testnet",
+        "0x13881": "Polygon Mumbai",
+        "0xa86a": "Avalanche C-Chain",
+        // Add more networks as needed
+      };
+
+      setNetworkName(networks[chainId] || `Unknown Network (${chainId})`);
+    } catch (error) {
+      console.error("Error checking network:", error);
+    }
+  };
+
+  // Call checkCurrentNetwork when wallet is connected
+  useEffect(() => {
+    if (isWalletConnected) {
+      checkCurrentNetwork();
+
+      // Listen for network changes
+      if (window.ethereum) {
+        window.ethereum.on("chainChanged", () => {
+          checkCurrentNetwork();
+        });
+      }
+    }
+  }, [isWalletConnected]);
 
   const decreaseQuantity = () => {
     if (quantity > 1) setQuantity(quantity - 1);
   };
 
   const increaseQuantity = () => {
-    if (quantity < 8) setQuantity(quantity + 1);
+    if (quantity < availableNfts) setQuantity(quantity + 1);
   };
 
   const handlePurchase = () => {
+    // Reset messages
+    setError(null);
+    setSuccessMessage(null);
+
     if (!isFullyAuthenticated) {
       setIsAuthModalOpen(true);
       return;
     }
 
-    // If fully authenticated, add to cart
-    addToCart({
-      id: "turtle-timepiece-genesis",
-      name: "Turtle Timepiece Genesis",
-      price: 1.45,
-      quantity,
-      image: "/videos/nft-video.mp4",
-    });
+    if (!isWalletConnected) {
+      setError("Please connect your wallet to purchase NFTs");
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
 
-    // Open the cart after adding
-    setIsCartOpen(true);
+    if (isInCart) {
+      setError("This item is already in your cart");
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
+    try {
+      // If fully authenticated, add to cart
+      addToCart({
+        id: NFT_ITEM_ID,
+        name: "Turtle Timepiece Genesis",
+        price: ETH_PRICE_USD,
+        quantity,
+        image: "/videos/nft-video.mp4",
+      });
+
+      // Show success message and open the cart
+      setSuccessMessage("Added to cart successfully!");
+      setTimeout(() => {
+        setSuccessMessage(null);
+        setIsCartOpen(true);
+      }, 1500);
+    } catch (err) {
+      console.error("Error adding to cart:", err);
+      setError("Failed to add item to cart");
+      setTimeout(() => setError(null), 3000);
+    }
+  };
+
+  const handleDirectPurchase = async () => {
+    // Reset messages
+    setError(null);
+    setSuccessMessage(null);
+    setTxHash(null);
+
+    if (!isFullyAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    if (!isWalletConnected) {
+      setError("Please connect your wallet to purchase NFTs");
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
+    if (availableNfts <= 0) {
+      setError("No NFTs available for purchase");
+      return;
+    }
+
+    // If multiple accounts available and none selected, show selection UI
+    if (availableAccounts.length > 1 && !selectedAccount) {
+      setIsAccountSelectionOpen(true);
+      return;
+    }
+
+    try {
+      setIsPurchasing(true);
+
+      // Show network information in the message
+      setSuccessMessage(`Preparing transaction on ${networkName}...`);
+
+      // Purchase the NFT directly from the contract with selected account
+      const result = await purchaseNFT(selectedAccount || undefined);
+
+      if (result.status === "success") {
+        setTxHash(result.transactionHash || null);
+        setSuccessMessage(
+          "NFT purchased successfully! It will appear in your wallet shortly."
+        );
+        // Update available NFTs
+        setAvailableNfts((prev) => Math.max(0, prev - 1));
+      } else {
+        setError(result.errorMessage || "Purchase failed");
+      }
+    } catch (err) {
+      const error = err as Error;
+      console.error("Error purchasing NFT:", error);
+      setError(error.message || "Failed to purchase NFT");
+    } finally {
+      setIsPurchasing(false);
+    }
   };
 
   const handleMakeOffer = () => {
@@ -56,6 +251,59 @@ const CollectionDetails = () => {
 
     // Handle make offer logic
     alert("Making an offer for Turtle Timepiece Genesis");
+  };
+
+  const viewCart = () => {
+    setIsCartOpen(true);
+  };
+
+  // Add this account selection UI within your component
+  const renderAccountSelection = () => {
+    if (!isAccountSelectionOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div className="bg-[#13111C] rounded-xl p-6 max-w-md w-full">
+          <h3 className="text-xl font-semibold mb-4">Select Account</h3>
+          <p className="text-gray-300 mb-4">
+            Choose which account to use for this purchase:
+          </p>
+
+          <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
+            {availableAccounts.map((account) => (
+              <button
+                key={account}
+                onClick={() => {
+                  setSelectedAccount(account);
+                  setIsAccountSelectionOpen(false);
+                  // Trigger purchase after selection
+                  setTimeout(() => handleDirectPurchase(), 100);
+                }}
+                className={`w-full text-left p-3 rounded-lg flex items-center ${
+                  selectedAccount === account
+                    ? "bg-[#1E9AD3]/20 border border-[#1E9AD3]"
+                    : "bg-[#1A191F] hover:bg-[#1A191F]/80"
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 mr-3 flex-shrink-0" />
+                <div className="overflow-hidden">
+                  <span className="block truncate">{account}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setIsAccountSelectionOpen(false)}
+              className="px-4 py-2 rounded-lg bg-[#1A191F] hover:bg-[#1A191F]/80"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -138,13 +386,17 @@ const CollectionDetails = () => {
                       Current Price
                     </div>
                     <div className="text-2xl font-bold text-white">
-                      1.45 ETH{" "}
-                      <span className="text-gray-400 text-lg">($5,075)</span>
+                      {ETH_PRICE_USD} ETH{" "}
+                      <span className="text-gray-400 text-lg">
+                        (${USD_PRICE})
+                      </span>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-gray-400 text-sm mb-1">Available</div>
-                    <div className="text-xl font-bold text-white">8 NFTs</div>
+                    <div className="text-xl font-bold text-white">
+                      {availableNfts} NFTs
+                    </div>
                   </div>
                 </div>
 
@@ -156,6 +408,7 @@ const CollectionDetails = () => {
                     <button
                       onClick={decreaseQuantity}
                       className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors"
+                      disabled={quantity <= 1}
                     >
                       <Minus size={20} />
                     </button>
@@ -165,11 +418,37 @@ const CollectionDetails = () => {
                     <button
                       onClick={increaseQuantity}
                       className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors"
+                      disabled={quantity >= availableNfts}
                     >
                       <Plus size={20} />
                     </button>
                   </div>
                 </div>
+
+                {/* Status messages */}
+                {error && (
+                  <div className="mb-4 p-3 bg-red-900/20 border border-red-800/30 rounded-lg text-red-300 text-sm flex items-center">
+                    <AlertCircle size={16} className="mr-2 flex-shrink-0" />
+                    {error}
+                  </div>
+                )}
+
+                {successMessage && (
+                  <div className="mb-4 p-3 bg-green-900/20 border border-green-800/30 rounded-lg text-green-300 text-sm flex items-center">
+                    <Check size={16} className="mr-2 flex-shrink-0" />
+                    {successMessage}
+                    {txHash && (
+                      <a
+                        href={`https://sepolia.etherscan.io/tx/${txHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-2 underline hover:text-green-200"
+                      >
+                        View transaction
+                      </a>
+                    )}
+                  </div>
+                )}
 
                 {!isFullyAuthenticated && (
                   <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-800/30 rounded-lg text-yellow-300 text-sm">
@@ -179,19 +458,39 @@ const CollectionDetails = () => {
                   </div>
                 )}
 
+                {availableNfts <= 0 && (
+                  <div className="mb-4 p-3 bg-gray-900/20 border border-gray-800/30 rounded-lg text-gray-300 text-sm">
+                    All NFTs have been sold
+                  </div>
+                )}
+
                 <div className="flex gap-4">
-                  <button
-                    onClick={handlePurchase}
-                    className="flex-1 bg-[#00BCD4] hover:bg-[#00ACC1] text-white font-medium py-3 px-6 rounded-lg transition-colors"
-                  >
-                    Add to Cart
-                  </button>
-                  <button
-                    onClick={handleMakeOffer}
-                    className="flex-1 bg-white/5 hover:bg-white/10 text-white font-medium py-3 px-6 rounded-lg border border-white/10 transition-colors"
-                  >
-                    Make Offer
-                  </button>
+                  {isInCart ? (
+                    <button
+                      onClick={viewCart}
+                      className="flex-1 bg-[#2E3A59] hover:bg-[#384670] text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                    >
+                      <ShoppingCart size={18} className="mr-2" />
+                      View Cart
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handlePurchase}
+                        className="flex-1 bg-[#00BCD4] hover:bg-[#00ACC1] text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                        disabled={availableNfts <= 0}
+                      >
+                        Add to Cart
+                      </button>
+                      <button
+                        onClick={handleDirectPurchase}
+                        disabled={isPurchasing || availableNfts <= 0}
+                        className="flex-1 bg-[#4A148C] hover:bg-[#6A1B9A] text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                      >
+                        {isPurchasing ? "Processing..." : "Buy Now"}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -252,6 +551,60 @@ const CollectionDetails = () => {
               </div>
             </div>
           </div>
+
+          {/* Account and Network Info */}
+          {isWalletConnected && (
+            <div className="bg-[#13111C]/60 p-4 rounded-xl mb-6">
+              <div className="flex flex-wrap gap-4 justify-between items-center">
+                {/* Account Info */}
+                {availableAccounts.length > 0 && (
+                  <div className="flex items-center">
+                    <div>
+                      <span className="text-sm text-gray-400">Account:</span>
+                      <div className="flex items-center mt-1">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 mr-2" />
+                        <span className="font-medium truncate max-w-[200px]">
+                          {selectedAccount || "None selected"}
+                        </span>
+                      </div>
+                    </div>
+                    {availableAccounts.length > 1 && (
+                      <button
+                        onClick={() => setIsAccountSelectionOpen(true)}
+                        className="text-sm bg-[#1A191F] hover:bg-[#1A191F]/80 px-3 py-1.5 rounded-lg ml-4"
+                      >
+                        Change
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Network Info */}
+                <div className="flex items-center">
+                  <div>
+                    <span className="text-sm text-gray-400">Network:</span>
+                    <div className="flex items-center mt-1">
+                      <div
+                        className={`w-3 h-3 rounded-full mr-2 ${
+                          networkName === "Sepolia Testnet"
+                            ? "bg-green-500"
+                            : "bg-yellow-500"
+                        }`}
+                      />
+                      <span className="font-medium">
+                        {networkName}
+                        {networkName !== "Sepolia Testnet" && (
+                          <span className="text-yellow-400 ml-2 text-xs">
+                            (Please switch to Sepolia)
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -260,6 +613,9 @@ const CollectionDetails = () => {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
+
+      {/* Account Selection Modal */}
+      {renderAccountSelection()}
     </>
   );
 };

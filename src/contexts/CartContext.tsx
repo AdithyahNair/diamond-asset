@@ -25,9 +25,13 @@ interface CartContextType {
   totalPrice: number;
   isCartOpen: boolean;
   setIsCartOpen: (isOpen: boolean) => void;
+  hasItemInCart: (itemId: string) => boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
+
+// Storage key for cart items
+const CART_STORAGE_KEY = "turtle_timepiece_cart";
 
 export const useCart = () => {
   const context = useContext(CartContext);
@@ -44,21 +48,39 @@ interface CartProviderProps {
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const { isFullyAuthenticated } = useAuth();
+  const { isFullyAuthenticated, user } = useAuth();
 
-  // For demo purposes - populate cart with an example item
+  // Load cart from localStorage when component mounts or user changes
   useEffect(() => {
-    if (items.length === 0) {
-      const demoItem: CartItem = {
-        id: "timepiece-genesis",
-        name: "Turtle Timepiece Genesis",
-        price: 1.45,
-        quantity: 1,
-        image: "/videos/nft-video.mp4", // This will trigger the "THIS CONTENT IS NOT AVAILABLE" placeholder
-      };
-      setItems([demoItem]);
+    if (user) {
+      const savedCart = localStorage.getItem(
+        `${CART_STORAGE_KEY}_${user.email}`
+      );
+      if (savedCart) {
+        try {
+          const parsedCart = JSON.parse(savedCart);
+          setItems(parsedCart);
+        } catch (e) {
+          console.error("Failed to parse cart data:", e);
+          // Clear invalid cart data
+          localStorage.removeItem(`${CART_STORAGE_KEY}_${user.email}`);
+        }
+      }
     }
-  }, []);
+  }, [user]);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    if (user && items.length > 0) {
+      localStorage.setItem(
+        `${CART_STORAGE_KEY}_${user.email}`,
+        JSON.stringify(items)
+      );
+    } else if (user) {
+      // Clear the storage if cart is empty
+      localStorage.removeItem(`${CART_STORAGE_KEY}_${user.email}`);
+    }
+  }, [items, user]);
 
   // If user logs out, clear the cart
   useEffect(() => {
@@ -95,6 +117,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const clearCart = () => {
     setItems([]);
+    if (user) {
+      localStorage.removeItem(`${CART_STORAGE_KEY}_${user.email}`);
+    }
+  };
+
+  const hasItemInCart = (itemId: string) => {
+    return items.some((item) => item.id === itemId);
   };
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -114,6 +143,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     totalPrice,
     isCartOpen,
     setIsCartOpen,
+    hasItemInCart,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

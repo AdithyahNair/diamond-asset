@@ -6,7 +6,7 @@ import "./index.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import { RainbowKitProvider, lightTheme } from "@rainbow-me/rainbowkit";
 import { WagmiProvider, http } from "wagmi";
-import { mainnet } from "wagmi/chains";
+import { mainnet, sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createConfig } from "wagmi";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -14,9 +14,10 @@ import { CartProvider } from "./contexts/CartContext";
 
 // Create wagmi config
 const config = createConfig({
-  chains: [mainnet],
+  chains: [sepolia, mainnet],
   transports: {
     [mainnet.id]: http(),
+    [sepolia.id]: http(),
   },
 });
 

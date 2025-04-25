@@ -1,7 +1,19 @@
-import React from "react";
-import { X, ShoppingCart, Check, CreditCard, Bitcoin } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  ShoppingCart,
+  Check,
+  CreditCard,
+  Bitcoin,
+  Loader2,
+  AlertCircle,
+  Trash2,
+  Plus,
+  Minus,
+} from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { sendTransaction } from "../../lib/ethereum";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -20,10 +32,98 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
   const [paymentMethod, setPaymentMethod] = React.useState<"crypto" | "card">(
     "crypto"
   );
+  const [transactionHash, setTransactionHash] = useState<string | null>(null);
+  const [transactionSuccess, setTransactionSuccess] = useState(false);
+  const [isTransactionPending, setIsTransactionPending] = useState(false);
+  const [transactionError, setTransactionError] = useState<string | null>(null);
+
+  // Reset transaction states when cart is opened/closed
+  useEffect(() => {
+    if (!isOpen) {
+      setTransactionHash(null);
+      setTransactionError(null);
+      setTransactionSuccess(false);
+    }
+  }, [isOpen]);
 
   // Calculate service fee (2.5% of subtotal)
   const serviceFee = totalPrice * 0.025;
   const finalTotal = totalPrice + serviceFee;
+
+  // Handle the crypto payment
+  const handleCryptoPayment = async () => {
+    if (!isWalletConnected) {
+      openAuthModal();
+      return;
+    }
+
+    setIsTransactionPending(true);
+    setTransactionError(null);
+    setTransactionSuccess(false);
+    setTransactionHash(null);
+
+    try {
+      // Attempt to send the transaction
+      const result = await sendTransaction(finalTotal);
+
+      if (result.status === "error") {
+        setTransactionError(result.errorMessage || "Transaction failed");
+        setIsTransactionPending(false);
+        return;
+      }
+
+      if (result.transactionHash) {
+        setTransactionHash(result.transactionHash);
+        setTransactionSuccess(true);
+
+        // Clear cart on successful payment after a short delay
+        setTimeout(() => {
+          clearCart();
+        }, 3000);
+      }
+    } catch (error: unknown) {
+      console.error("Payment processing error:", error);
+      setTransactionError(
+        error instanceof Error ? error.message : "Transaction failed"
+      );
+    } finally {
+      setIsTransactionPending(false);
+    }
+  };
+
+  // Handle the card payment (not implemented in this example)
+  const handleCardPayment = () => {
+    setTransactionError(
+      "Card payment is currently not available. Please use crypto payment."
+    );
+  };
+
+  // Handle the purchase button click
+  const handlePurchase = () => {
+    // Reset any existing errors
+    setTransactionError(null);
+
+    if (items.length === 0) {
+      setTransactionError("Your cart is empty");
+      return;
+    }
+
+    if (paymentMethod === "crypto") {
+      handleCryptoPayment();
+    } else {
+      handleCardPayment();
+    }
+  };
+
+  // Handle removing an item from cart
+  const handleRemoveItem = (itemId: string) => {
+    // Reset transaction states when modifying cart
+    setTransactionError(null);
+    setTransactionHash(null);
+    setTransactionSuccess(false);
+
+    removeFromCart(itemId);
+  };
 
   if (!isOpen) return null;
 
@@ -165,6 +265,34 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
             </div>
           ) : (
             <div className="space-y-5 mt-2">
+              {/* Transaction Status Messages */}
+              {transactionError && (
+                <div
+                  className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4"
+                  role="alert"
+                >
+                  <strong className="font-bold">Error:</strong>
+                  <span className="block sm:inline"> {transactionError}</span>
+                </div>
+              )}
+
+              {transactionSuccess && (
+                <div className="mb-5 p-4 bg-green-900/20 border border-green-800/30 rounded-xl text-green-300 text-sm flex items-start">
+                  <Check size={18} className="mr-2 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-medium mb-1">Transaction successful!</p>
+                    <p>Your NFT will be transferred shortly.</p>
+                    {transactionHash && (
+                      <p className="mt-2 break-all">
+                        <span className="text-xs text-green-400 opacity-80">
+                          TX Hash: {transactionHash}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {items.map((item) => (
                 <div
                   key={item.id}
@@ -193,153 +321,125 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                         </div>
                         <video
                           className="h-full w-full object-cover"
-                          autoPlay
-                          loop
                           muted
+                          loop
+                          autoPlay
                           playsInline
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Open a modal or expand the video
-                            const video = e.currentTarget as HTMLVideoElement;
-                            if (video.paused) {
-                              video.play();
-                            } else {
-                              video.pause();
-                            }
-                          }}
-                          style={{ cursor: "pointer" }}
                         >
                           <source src={item.image} type="video/mp4" />
-                          Your browser does not support the video tag.
                         </video>
                       </div>
                     ) : (
-                      <div className="h-24 w-24 rounded-lg overflow-hidden flex-shrink-0 border border-gray-700 shadow-sm">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-24 w-24 rounded-lg object-cover flex-shrink-0 border border-gray-700 shadow-sm"
+                      />
                     )
                   ) : (
-                    <div className="h-24 w-24 rounded-lg overflow-hidden flex-shrink-0 border border-gray-700 shadow-sm bg-gray-800 flex items-center justify-center">
-                      <span className="text-xs text-gray-400 text-center p-2">
-                        THIS CONTENT IS NOT AVAILABLE
-                      </span>
+                    <div className="h-24 w-24 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-700 shadow-sm">
+                      <ShoppingCart size={30} className="text-gray-600" />
                     </div>
                   )}
 
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <div>
-                        <div className="text-[#1E9AD3] text-sm">
-                          Turtle Timepiece
-                        </div>
-                        <h3 className="font-semibold text-white">
-                          {item.name}
-                        </h3>
+                  <div className="flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-white font-medium">{item.name}</h3>
+                      <div className="text-lg text-white mt-1">
+                        {item.price} ETH
                       </div>
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-gray-400 hover:text-red-400 p-1 rounded-full hover:bg-red-900/20 transition-colors"
-                      >
-                        <X size={16} />
-                      </button>
                     </div>
 
-                    <p className="text-white font-semibold mt-1">
-                      {item.price} ETH
-                    </p>
-
-                    {item.image?.endsWith(".mp4") && (
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-1 text-gray-400">
+                        <span>Qty: {item.quantity}</span>
+                      </div>
                       <button
-                        className="mt-2 px-3 py-1 text-xs rounded-md bg-[#1E9AD3]/10 text-[#1E9AD3] hover:bg-[#1E9AD3]/20 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Open a larger view of the video or item
-                          window.open(item.image, "_blank");
-                        }}
+                        onClick={() => handleRemoveItem(item.id)}
+                        className="text-gray-500 hover:text-red-400 p-1 transition-colors"
                       >
-                        View NFT
+                        <Trash2 size={18} />
                       </button>
-                    )}
+                    </div>
                   </div>
                 </div>
               ))}
-            </div>
-          )}
-        </div>
 
-        {isFullyAuthenticated && items.length > 0 && (
-          <>
-            <div className="border-t border-gray-700 p-5">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-gray-400">Subtotal</span>
-                <span className="font-semibold text-white">
-                  {totalPrice.toFixed(2)} ETH
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-gray-400">Service Fee (2.5%)</span>
-                <span className="font-semibold text-white">
-                  {serviceFee.toFixed(2)} ETH
-                </span>
-              </div>
-
-              <div className="border-t border-gray-700 pt-3 mb-6">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-lg text-gray-300">
-                    Total
-                  </span>
-                  <span className="font-bold text-xl text-white">
-                    {finalTotal.toFixed(2)} ETH
-                  </span>
+              <div className="mt-6 bg-[#1A2435] rounded-xl p-4 border border-gray-700">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-gray-300">
+                    <span>Subtotal</span>
+                    <span>{totalPrice.toFixed(5)} ETH</span>
+                  </div>
+                  <div className="flex justify-between text-gray-300">
+                    <span>Service Fee (2.5%)</span>
+                    <span>{serviceFee.toFixed(5)} ETH</span>
+                  </div>
+                  <div className="h-px bg-gray-700 my-2"></div>
+                  <div className="flex justify-between text-white font-medium">
+                    <span>Total</span>
+                    <span>{finalTotal.toFixed(5)} ETH</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="mb-5">
-                <h3 className="text-white mb-3">Payment Method</h3>
-                <div className="grid grid-cols-2 gap-4">
+              <div className="mt-2 space-y-3">
+                <div className="flex w-full">
                   <button
                     onClick={() => setPaymentMethod("crypto")}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all border ${
+                    className={`w-1/2 p-3 flex items-center justify-center gap-2 transition-colors ${
                       paymentMethod === "crypto"
-                        ? "bg-[#1A2435] border-[#1E9AD3] text-white"
-                        : "bg-transparent border-gray-700 text-gray-400 hover:border-gray-500"
+                        ? "bg-[#1E9AD3] text-white"
+                        : "bg-[#1A2435] text-gray-300 hover:bg-[#243049]"
+                    } rounded-l-lg border ${
+                      paymentMethod === "crypto"
+                        ? "border-[#1E9AD3]"
+                        : "border-gray-700"
                     }`}
                   >
                     <Bitcoin size={18} />
-                    Crypto
+                    <span>Crypto</span>
                   </button>
                   <button
                     onClick={() => setPaymentMethod("card")}
-                    className={`flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all border ${
+                    className={`w-1/2 p-3 flex items-center justify-center gap-2 transition-colors ${
                       paymentMethod === "card"
-                        ? "bg-[#1A2435] border-[#1E9AD3] text-white"
-                        : "bg-transparent border-gray-700 text-gray-400 hover:border-gray-500"
+                        ? "bg-[#1E9AD3] text-white"
+                        : "bg-[#1A2435] text-gray-300 hover:bg-[#243049]"
+                    } rounded-r-lg border ${
+                      paymentMethod === "card"
+                        ? "border-[#1E9AD3]"
+                        : "border-gray-700"
                     }`}
                   >
                     <CreditCard size={18} />
-                    Card
+                    <span>Card</span>
                   </button>
                 </div>
+
+                <button
+                  onClick={handlePurchase}
+                  disabled={isTransactionPending}
+                  className={`w-full p-4 rounded-xl font-medium transition-all 
+                    ${
+                      isTransactionPending
+                        ? "bg-gray-600 text-gray-300 cursor-not-allowed"
+                        : "bg-gradient-to-r from-[#1E9AD3] to-[#0056a8] text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:from-[#1789bd] hover:to-[#004e99]"
+                    }`}
+                >
+                  {isTransactionPending ? (
+                    <div className="flex items-center justify-center">
+                      <Loader2 size={20} className="animate-spin mr-2" />
+                      Processing...
+                    </div>
+                  ) : (
+                    `Checkout (${finalTotal.toFixed(5)} ETH)`
+                  )}
+                </button>
               </div>
-
-              <button className="w-full bg-[#1E9AD3] text-white py-3.5 rounded-xl font-medium hover:bg-[#1789bd] transition-all">
-                Complete Purchase
-              </button>
-
-              <button
-                onClick={() => clearCart()}
-                className="w-full text-center py-4 text-gray-400 hover:text-gray-300 transition-colors"
-              >
-                Clear Cart
-              </button>
             </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </>
   );
