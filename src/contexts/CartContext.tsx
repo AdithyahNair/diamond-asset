@@ -46,6 +46,20 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { isFullyAuthenticated } = useAuth();
 
+  // For demo purposes - populate cart with an example item
+  useEffect(() => {
+    if (items.length === 0) {
+      const demoItem: CartItem = {
+        id: "timepiece-genesis",
+        name: "Turtle Timepiece Genesis",
+        price: 1.45,
+        quantity: 1,
+        image: "/videos/nft-video.mp4", // This will trigger the "THIS CONTENT IS NOT AVAILABLE" placeholder
+      };
+      setItems([demoItem]);
+    }
+  }, []);
+
   // If user logs out, clear the cart
   useEffect(() => {
     if (!isFullyAuthenticated) {
