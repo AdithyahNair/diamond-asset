@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { ethers } from "ethers";
 import {
   ArrowLeft,
   Eye,
@@ -16,7 +17,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import AuthModal from "../auth/AuthModal";
 import { purchaseNFT } from "../../lib/ethereum";
-import { getAvailableNfts } from "../../lib/nftContract";
+import { getAvailableNfts, getNftContract } from "../../lib/nftContract";
 
 // ETH price values
 const ETH_PRICE_USD = 0.001; // Price in ETH (0.001 ETH ≈ $2 at ~$2000/ETH)
@@ -49,9 +50,7 @@ const CollectionDetails: React.FC = () => {
     if (window.ethereum) {
       const checkAvailableNfts = async () => {
         try {
-          const provider = new (
-            window as unknown
-          ).ethers.providers.Web3Provider(window.ethereum);
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
           const available = await getAvailableNfts(provider);
           setAvailableNfts(available);
         } catch (error) {
@@ -229,8 +228,73 @@ const CollectionDetails: React.FC = () => {
         setSuccessMessage(
           "NFT purchased successfully! It will appear in your wallet shortly."
         );
-        // Update available NFTs
-        setAvailableNfts((prev) => Math.max(0, prev - 1));
+
+        // Wait for transaction to be mined
+        const waitForConfirmation = async () => {
+          try {
+            // Check if transaction is confirmed
+            if (!window.ethereum || !result.transactionHash) return;
+
+            // Create provider using ethers directly
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+            // Wait for transaction receipt
+            const receipt = await provider.getTransactionReceipt(
+              result.transactionHash
+            );
+
+            if (receipt && receipt.confirmations > 0) {
+              // Transaction confirmed - now get the updated NFT count directly from contract
+              const contract = await getNftContract(provider);
+              const currentCount = await contract.getTokenCount();
+              const maxSupply = 8;
+              const available = maxSupply - currentCount.toNumber();
+
+              // Update the UI with the actual count from the blockchain
+              setAvailableNfts(available);
+              console.log("Updated NFT count from blockchain:", available);
+            } else {
+              // Not confirmed yet, check again in 3 seconds
+              setTimeout(waitForConfirmation, 3000);
+            }
+          } catch (error) {
+            console.error("Error checking transaction confirmation:", error);
+            // Fallback to direct check after 15 seconds regardless of errors
+            setTimeout(checkAvailableNftsDirectly, 15000);
+          }
+        };
+
+        // Fallback function to directly check NFT count
+        const checkAvailableNftsDirectly = async () => {
+          try {
+            if (window.ethereum) {
+              // Create provider using ethers directly
+              const provider = new ethers.providers.Web3Provider(
+                window.ethereum
+              );
+
+              // Force the provider to refresh its cache
+              await provider.send("eth_chainId", []);
+
+              // Get count from contract directly
+              const available = await getAvailableNfts(provider);
+
+              setAvailableNfts(available);
+              console.log(
+                "Force updated NFT count from blockchain:",
+                available
+              );
+            }
+          } catch (error) {
+            console.error("Error directly checking NFT count:", error);
+          }
+        };
+
+        // Start waiting for confirmation
+        waitForConfirmation();
+
+        // Also set a backup timer to check directly after 15 seconds
+        setTimeout(checkAvailableNftsDirectly, 15000);
       } else {
         setError(result.errorMessage || "Purchase failed");
       }
@@ -366,17 +430,6 @@ const CollectionDetails: React.FC = () => {
                 <h1 className="text-4xl font-bold text-white mb-4">
                   Turtle Timepiece Genesis
                 </h1>
-
-                <div className="flex items-center gap-6 text-gray-400">
-                  <div className="flex items-center">
-                    <Eye size={18} className="mr-2" />
-                    <span>192 views</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Heart size={18} className="mr-2" />
-                    <span>22 favorites</span>
-                  </div>
-                </div>
               </div>
 
               <div className="bg-[#13111C]/60 p-6 rounded-xl mb-8">
@@ -394,8 +447,33 @@ const CollectionDetails: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-gray-400 text-sm mb-1">Available</div>
-                    <div className="text-xl font-bold text-white">
+                    <div className="text-xl font-bold text-white flex items-center justify-end">
                       {availableNfts} NFTs
+                      <button
+                        onClick={async () => {
+                          if (window.ethereum) {
+                            try {
+                              const provider =
+                                new ethers.providers.Web3Provider(
+                                  window.ethereum
+                                );
+                              const available = await getAvailableNfts(
+                                provider
+                              );
+                              setAvailableNfts(available);
+                            } catch (error) {
+                              console.error(
+                                "Error refreshing NFT count:",
+                                error
+                              );
+                            }
+                          }
+                        }}
+                        className="ml-2 p-1 rounded-full hover:bg-[#1A191F]/50"
+                        title="Refresh NFT count"
+                      >
+                        <RefreshCw size={16} />
+                      </button>
                     </div>
                   </div>
                 </div>
