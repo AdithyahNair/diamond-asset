@@ -1,15 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ShoppingCart, LogOut, User } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import AuthModal from "../auth/AuthModal";
 import CartSidebar from "../cart/CartSidebar";
+import WalletStatus from "../wallet/WalletStatus";
 
 const Header = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const { user, isFullyAuthenticated, logout } = useAuth();
+  const {
+    user,
+    isFullyAuthenticated,
+    logout,
+    walletAddress,
+    isWalletConnected,
+  } = useAuth();
   const { totalItems, isCartOpen, setIsCartOpen } = useCart();
+  const [networkName, setNetworkName] = useState<string>("Unknown");
+  const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
+
+  useEffect(() => {
+    const checkNetwork = async () => {
+      if (window.ethereum && isWalletConnected) {
+        try {
+          const chainId = await window.ethereum.request({
+            method: "eth_chainId",
+          });
+          const networks: Record<string, string> = {
+            "0x1": "Mainnet",
+            "0xaa36a7": "Sepolia",
+            "0x13881": "Mumbai",
+            "0xa86a": "Avalanche",
+          };
+          const name = networks[chainId] || "Unknown";
+          setNetworkName(name);
+          setIsCorrectNetwork(chainId === "0xaa36a7"); // Sepolia testnet
+        } catch (error) {
+          console.error("Error checking network:", error);
+        }
+      }
+    };
+
+    checkNetwork();
+
+    if (window.ethereum) {
+      window.ethereum.on("chainChanged", checkNetwork);
+      return () => {
+        window.ethereum.removeListener("chainChanged", checkNetwork);
+      };
+    }
+  }, [isWalletConnected]);
 
   const handleAuthClick = () => {
     setIsAuthModalOpen(true);
@@ -50,6 +91,13 @@ const Header = () => {
                       {user?.email?.split("@")[0]}
                     </span>
                   </div>
+                  {isWalletConnected && walletAddress && (
+                    <WalletStatus
+                      address={walletAddress}
+                      networkName={networkName}
+                      isCorrectNetwork={isCorrectNetwork}
+                    />
+                  )}
                   <button
                     onClick={logout}
                     className="p-2 rounded-full text-gray-200 hover:text-red-400 hover:bg-red-400/10 transition-all duration-300"
