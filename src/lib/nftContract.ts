@@ -20,8 +20,10 @@ export const getNftContract = async (
 // Get available NFTs
 export const getAvailableNfts = async (provider: ethers.providers.Provider) => {
   try {
-    // For testing marketplace functionality, always show 8 available
-    return 8;
+    const contract = await getNftContract(provider);
+    const maxSupply = 8;
+    const currentSupply = await contract.getTokenCount();
+    return maxSupply - currentSupply.toNumber();
   } catch (error) {
     console.error("Error getting available NFTs:", error);
     return 0;
@@ -32,22 +34,9 @@ export const getAvailableNfts = async (provider: ethers.providers.Provider) => {
 export const purchaseNft = async (signer: ethers.Signer, recipient: string) => {
   try {
     const contract = await getNftContract(signer);
-
-    // Instead of minting, transfer from your wallet to the buyer
-    // You'll need to first approve the transfer (not shown here)
-    // This is a simplified example - you'd typically use a marketplace contract
-
-    const yourAddress = "0xb2197e9066170Bbe67e877437FfCf5f7f3f092D3"; // Your wallet address
-    const tokenId = 1; // Token ID to transfer (would be dynamic in real implementation)
-
-    // Send payment to your wallet
-    const tx = await signer.sendTransaction({
-      to: yourAddress,
+    const tx = await contract.mintWithETH(recipient, {
       value: ethers.utils.parseEther(NFT_PRICE.toString()),
     });
-
-    // When payment is received, transfer the NFT
-    // In a real implementation, this would be handled by a marketplace smart contract
 
     return {
       success: true,

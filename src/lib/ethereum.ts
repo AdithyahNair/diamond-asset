@@ -108,7 +108,7 @@ export const sendTransaction = async (
             from,
             to: SELLER_ADDRESS,
             value: value.toString(16),
-            gas: "0x5208", // 21000 gas (standard transaction)
+            gas: "0x30D40", // 200,000 gas, much higher than minimum
             chainId: "0xaa36a7", // Ensure we're using Sepolia testnet
           },
         ],
@@ -254,7 +254,7 @@ export const purchaseNFT = async (
           from,
           to: NFT_CONTRACT_ADDRESS,
           value: value.toString(16),
-          gas: "0x55F0", // 22000 gas (slightly more than standard for contract interaction)
+          gas: "0x30D40", // 200,000 gas, much higher than minimum
           data: "0x6a627842000000000000000000000000" + from.slice(2), // function mintWithETH(address)
           chainId: "0xaa36a7", // Ensure we're using Sepolia testnet
         },

@@ -12,7 +12,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "set-base-uri": "npx hardhat run contracts/set-base-uri.js --network sepolia"
   },
   "keywords": [
     "nft",
