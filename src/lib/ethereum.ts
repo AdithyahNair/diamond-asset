@@ -145,33 +145,114 @@ export const sendTransaction = async (
 };
 
 /**
+ * Hook for sending Ethereum transactions
+ */
+export const useEthereumTransaction = () => {
+  const { writeContract, data: hash } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
+
+  const sendPayment = async (
+    amountInEth: number
+  ): Promise<TransactionResult> => {
+    try {
+      await writeContract({
+        address: SELLER_ADDRESS,
+        abi: [], // Empty ABI since we're just sending ETH
+        functionName: "", // No function name needed for direct ETH transfer
+        value: parseEther(amountInEth.toString()),
+      });
+
+      if (isConfirming) {
+        return {
+          status: "pending",
+          transactionHash: hash,
+        };
+      }
+
+      return {
+        status: isConfirmed ? "success" : "pending",
+        transactionHash: hash,
+      };
+    } catch (error) {
+      console.error("Payment failed:", error);
+      return {
+        status: "error",
+        errorMessage: error instanceof Error ? error.message : "Payment failed",
+      };
+    }
+  };
+
+  const buyNFT = async (): Promise<TransactionResult> => {
+    try {
+      await writeContract({
+        address: NFT_CONTRACT_ADDRESS,
+        abi: [
+          {
+            name: "mintWithETH",
+            type: "function",
+            stateMutability: "payable",
+            inputs: [],
+            outputs: [],
+          },
+        ],
+        functionName: "mintWithETH",
+        value: parseEther(NFT_PRICE.toString()),
+      });
+
+      if (isConfirming) {
+        return {
+          status: "pending",
+          transactionHash: hash,
+        };
+      }
+
+      return {
+        status: isConfirmed ? "success" : "pending",
+        transactionHash: hash,
+      };
+    } catch (error) {
+      console.error("NFT purchase failed:", error);
+      return {
+        status: "error",
+        errorMessage:
+          error instanceof Error ? error.message : "NFT purchase failed",
+      };
+    }
+  };
+
+  return {
+    sendPayment,
+    buyNFT,
+  };
+};
+
+// Helper to pad address to 32 bytes
+function padAddress(address: string) {
+  return address.toLowerCase().replace("0x", "").padStart(64, "0");
+}
+
+/**
  * Purchases an NFT from the contract
  *
- * @param specificAccount - Optional specific account address to use for the purchase
  * @returns Transaction result object
  */
-export const purchaseNFT = async (
-  specificAccount?: string
-): Promise<TransactionResult> => {
+export const purchaseNFT = async (): Promise<TransactionResult> => {
   try {
-    if (!window.ethereum) {
-      throw new Error("MetaMask is not installed");
-    }
+    if (!window.ethereum) throw new Error("MetaMask is not installed");
 
-    // First check if we're already on Sepolia
     const chainId = await window.ethereum.request({ method: "eth_chainId" });
     const sepoliaChainId = "0xaa36a7";
-
-    // Only switch networks if we're not already on Sepolia
     if (chainId !== sepoliaChainId) {
       try {
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: sepoliaChainId }], // chainId for Sepolia testnet in hex
+          params: [{ chainId: sepoliaChainId }],
         });
       } catch (error) {
         const switchError = error as EthereumProviderError;
-        // This error code indicates that the chain has not been added to MetaMask
         if (switchError.code === 4902) {
           try {
             await window.ethereum.request({
@@ -192,10 +273,13 @@ export const purchaseNFT = async (
             });
           } catch (addError) {
             console.error("Error adding Sepolia network:", addError);
-            throw new Error("Could not add Sepolia network");
+            return {
+              status: "error",
+              errorMessage:
+                "Could not add Sepolia network. Please try again or add it manually.",
+            };
           }
         } else if (switchError.code === 4001 || switchError.code === 4100) {
-          // User rejected the request or unauthorized
           console.error("User rejected the network switch:", switchError);
           return {
             status: "error",
@@ -204,49 +288,24 @@ export const purchaseNFT = async (
           };
         } else {
           console.error("Error switching to Sepolia:", switchError);
-          throw new Error("Could not switch to Sepolia network");
+          return {
+            status: "error",
+            errorMessage: `Could not switch to Sepolia network: ${switchError.message}`,
+          };
         }
       }
     }
 
-    // If a specific account was provided, use it
-    // Otherwise, just get the available accounts (which will prompt MetaMask to show account selector)
-    const method = specificAccount ? "eth_requestAccounts" : "eth_accounts";
     const accounts = await window.ethereum.request({
-      method: method,
+      method: "eth_requestAccounts",
     });
+    const from = accounts[0];
+    const value = parseEther(NFT_PRICE.toString());
 
-    // If a specific account was provided, check if it's available
-    // Otherwise use the first account in the list
-    let from: string;
-    if (specificAccount) {
-      // Convert to lowercase for case-insensitive comparison
-      const lowerSpecificAccount = specificAccount.toLowerCase();
-      const foundAccount = accounts.find(
-        (acc: string) => acc.toLowerCase() === lowerSpecificAccount
-      );
+    // Correct function selector for mintWithETH(address)
+    const functionSelector = "0x5afcb497";
+    const data = functionSelector + padAddress(from);
 
-      if (!foundAccount) {
-        throw new Error("The specified account is not available in MetaMask");
-      }
-      from = foundAccount;
-    } else {
-      // No specific account provided, so let the user select in MetaMask
-      // If no accounts available, this will trigger MetaMask's account selector
-      if (accounts.length === 0) {
-        const requestedAccounts = await window.ethereum.request({
-          method: "eth_requestAccounts",
-        });
-        from = requestedAccounts[0];
-      } else {
-        from = accounts[0];
-      }
-    }
-
-    // Convert ETH price to wei (as a hex string)
-    const value = parseEther(`${NFT_PRICE}`);
-
-    // Call mintWithETH function on the contract
     const transactionHash = await window.ethereum.request({
       method: "eth_sendTransaction",
       params: [
@@ -254,16 +313,16 @@ export const purchaseNFT = async (
           from,
           to: NFT_CONTRACT_ADDRESS,
           value: value.toString(16),
-          gas: "0x30D40", // 200,000 gas, much higher than minimum
-          data: "0x6a627842000000000000000000000000" + from.slice(2), // function mintWithETH(address)
-          chainId: "0xaa36a7", // Ensure we're using Sepolia testnet
+          gas: "0x30D40",
+          chainId: "0xaa36a7",
+          data,
         },
       ],
     });
 
     return {
       status: "success",
-      transactionHash,
+      transactionHash: transactionHash as string,
     };
   } catch (error) {
     const err = error as Error;
@@ -273,56 +332,6 @@ export const purchaseNFT = async (
       errorMessage: err.message || "NFT purchase failed",
     };
   }
-};
-
-/**
- * Hook for sending Ethereum transactions
- */
-export const useEthereumTransaction = () => {
-  const { writeContract, isPending, isSuccess, isError, error, data } =
-    useWriteContract();
-
-  // Get transaction receipt
-  const {
-    data: receipt,
-    isLoading: isWaitingForReceipt,
-    isSuccess: isReceiptSuccess,
-  } = useWaitForTransactionReceipt({
-    hash: data,
-  });
-
-  // Send payment to seller
-  const sendPayment = async (amountInEth: number) => {
-    try {
-      await sendTransaction(amountInEth);
-    } catch (error) {
-      const err = error as Error;
-      console.error("Payment failed:", err);
-      throw err;
-    }
-  };
-
-  // Purchase an NFT
-  const buyNFT = async () => {
-    try {
-      return await purchaseNFT();
-    } catch (error) {
-      const err = error as Error;
-      console.error("NFT purchase failed:", err);
-      throw err;
-    }
-  };
-
-  return {
-    sendPayment,
-    buyNFT,
-    isPending: isPending || isWaitingForReceipt,
-    isSuccess: isSuccess && isReceiptSuccess,
-    isError,
-    error,
-    transactionHash: data,
-    receipt,
-  };
 };
 
 // Define Ethereum window interface
