@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import { ethers } from "ethers";
 import {
   ArrowLeft,
@@ -18,7 +18,11 @@ import { useCart } from "../../contexts/CartContext";
 import AuthModal from "../auth/AuthModal";
 import { purchaseNFT } from "../../lib/ethereum";
 import { getAvailableNfts, getNftContract } from "../../lib/nftContract";
-import { supabase } from "../../lib/supabase";
+import {
+  supabase,
+  hasUserPurchasedNFT,
+  updateNFTPurchaseStatus,
+} from "../../lib/supabase";
 
 // ETH price values
 const ETH_PRICE_USD = 0.001; // Price in ETH (0.001 ETH ≈ $2 at ~$2000/ETH)
@@ -212,17 +216,24 @@ const CollectionDetails: React.FC = () => {
       return;
     }
 
-    if (!(await canMint(user?.email))) {
-      setError("This email has already minted an NFT");
-      return;
-    }
-
-    if (availableAccounts.length > 1 && !selectedAccount) {
-      setIsAccountSelectionOpen(true);
+    if (!user?.email) {
+      setError("Please sign in with your email first");
       return;
     }
 
     try {
+      // Check if user has already purchased an NFT
+      const hasPurchased = await hasUserPurchasedNFT(user.email);
+      if (hasPurchased) {
+        setError("You have already purchased an NFT with this email");
+        return;
+      }
+
+      if (availableAccounts.length > 1 && !selectedAccount) {
+        setIsAccountSelectionOpen(true);
+        return;
+      }
+
       setIsPurchasing(true);
       setSuccessMessage(`Preparing transaction on ${networkName}...`);
 
@@ -231,19 +242,13 @@ const CollectionDetails: React.FC = () => {
       if (result.status === "success") {
         setTxHash(result.transactionHash || null);
 
-        if (user?.email && walletAddress) {
-          const { error: supabaseError } = await supabase
-            .from("minted_emails")
-            .insert([
-              {
-                email: user.email,
-                wallet_address: walletAddress,
-                minted_at: new Date(),
-              },
-            ]);
-
-          if (supabaseError) {
-            console.error("Error recording mint:", supabaseError);
+        // Update the user's NFT purchase status
+        if (user.email) {
+          const { success, error: updateError } = await updateNFTPurchaseStatus(
+            user.email
+          );
+          if (!success) {
+            console.error("Error updating purchase status:", updateError);
           }
         }
 

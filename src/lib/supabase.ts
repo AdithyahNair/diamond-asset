@@ -13,12 +13,35 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Initialize user profile after signup
+const initializeUserProfile = async (userId: string, email: string) => {
+  try {
+    const { error } = await supabase.from("user_profiles").insert([
+      {
+        user_id: userId,
+        email: email,
+        purchasedNFT: false,
+      },
+    ]);
+
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error initializing user profile:", error);
+    throw error;
+  }
+};
+
 // Auth helper functions
 export const signUp = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
   });
+
+  if (!error && data.user) {
+    // Initialize user profile after successful signup
+    await initializeUserProfile(data.user.id, email);
+  }
 
   return { data, error };
 };
@@ -90,6 +113,39 @@ export const hasEmailMinted = async (email: string) => {
     return !!data;
   } catch (error) {
     console.error("Error checking mint status:", error);
+    return false;
+  }
+};
+
+// Update user's NFT purchase status
+export const updateNFTPurchaseStatus = async (email: string) => {
+  try {
+    const { error } = await supabase
+      .from("user_profiles")
+      .update({ purchasedNFT: true })
+      .eq("email", email);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating NFT purchase status:", error);
+    return { success: false, error };
+  }
+};
+
+// Check if user has already purchased NFT
+export const hasUserPurchasedNFT = async (email: string) => {
+  try {
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("purchasedNFT")
+      .eq("email", email)
+      .single();
+
+    if (error) throw error;
+    return data?.purchasedNFT || false;
+  } catch (error) {
+    console.error("Error checking NFT purchase status:", error);
     return false;
   }
 };
