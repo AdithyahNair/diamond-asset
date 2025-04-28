@@ -79,6 +79,13 @@ const Header = () => {
                 Collections
                 <span className="absolute bottom-1 left-4 right-4 h-0.5 bg-[#1E9AD3] transform scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
               </Link>
+              <Link
+                to="/my-nfts"
+                className="px-4 py-2 rounded-full text-gray-200 hover:text-white hover:bg-white/5 font-medium transition-all duration-300 relative group"
+              >
+                My NFTs
+                <span className="absolute bottom-1 left-4 right-4 h-0.5 bg-[#1E9AD3] transform scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
+              </Link>
             </div>
 
             {/* Desktop Actions */}

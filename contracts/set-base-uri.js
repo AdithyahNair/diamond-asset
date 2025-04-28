@@ -1,4 +1,4 @@
-const { ethers } = require("ethers");
+const { JsonRpcProvider, Wallet, Contract } = require("ethers");
 const fs = require("fs");
 require("dotenv").config();
 
@@ -19,13 +19,13 @@ async function main() {
   const sepoliaRPC = process.env.SEPOLIA_RPC_URL;
 
   // Connect to the network
-  const provider = new ethers.providers.JsonRpcProvider(sepoliaRPC);
-  const wallet = new ethers.Wallet(privateKey, provider);
+  const provider = new JsonRpcProvider(sepoliaRPC);
+  const wallet = new Wallet(privateKey, provider);
 
   console.log("Setting base URI with the account:", wallet.address);
 
   // Create contract instance
-  const nftContract = new ethers.Contract(
+  const nftContract = new Contract(
     contractInfo.address,
     contractInfo.abi,
     wallet
@@ -34,7 +34,7 @@ async function main() {
   // Use a placeholder CID if needed
   const metadataCID =
     process.env.IPFS_METADATA_FOLDER_CID ||
-    "bafybeihvjgj5j3kz6k7xkw3s4kkzgjelqgcvwxroxhh6xqsrxtmoxnbzq4";
+    "bafybeigw2vgfqwuihkj5cxjqr6vtjdp475xzo7elalwd33bbkoo3fin4om";
 
   const ipfsBaseURI = `ipfs://${metadataCID}/`;
   console.log("Setting base URI to:", ipfsBaseURI);

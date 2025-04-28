@@ -4,12 +4,15 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 /**
  * @title TurtleTimepieceNFT
  * @dev ERC721 contract for the Turtle Timepiece NFT collection
  */
-contract TurtleTimepieceNFT is ERC721URIStorage, Ownable {
+contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     
@@ -30,8 +33,10 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable {
     
     // Events
     event NFTMinted(address owner, uint256 tokenId, string tokenURI);
+    event ContractPaused(address indexed by);
+    event ContractUnpaused(address indexed by);
     
-    constructor() ERC721("Turtle Timepiece", "TURTLE") {
+    constructor() ERC721("Diamond Access Ticket", "DIAMOND") {
         _baseTokenURI = "https://gateway.pinata.cloud/ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/";
     }
     
@@ -57,15 +62,35 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable {
     function setMintPrice(uint256 newPrice) external onlyOwner {
         mintPrice = newPrice;
     }
+    
+    /**
+     * @dev Pause the contract
+     */
+    function pause() external onlyOwner {
+        _pause();
+        emit ContractPaused(msg.sender);
+    }
+    
+    /**
+     * @dev Unpause the contract
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+        emit ContractUnpaused(msg.sender);
+    }
 
     /**
      * @dev Mint a new NFT with payment
      * @param recipient Address to receive the NFT
      * @return tokenId The newly minted token ID
      */
-    function mintWithETH(address recipient) external payable returns (uint256) {
+    function mintWithETH(address recipient) external payable nonReentrant whenNotPaused returns (uint256) {
         require(_tokenIds.current() < MAX_SUPPLY, "Max supply reached");
         require(msg.value >= mintPrice, "Insufficient ETH sent");
+        require(!hasPurchased[recipient], "Address has already purchased an NFT");
+        
+        // Calculate excess ETH
+        uint256 excess = msg.value - mintPrice;
         
         _tokenIds.increment();
         uint256 newTokenId = _tokenIds.current();
@@ -80,27 +105,11 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable {
         
         emit NFTMinted(recipient, newTokenId, tokenURI);
         
-        return newTokenId;
-    }
-    
-    /**
-     * @dev Mint NFT directly (owner only)
-     * @param recipient Address to receive the NFT
-     * @param tokenURI URI for the token metadata
-     * @return tokenId The newly minted token ID
-     */
-    function mintNFT(address recipient, string memory tokenURI) external onlyOwner returns (uint256) {
-        require(_tokenIds.current() < MAX_SUPPLY, "Max supply reached");
-        
-        _tokenIds.increment();
-        uint256 newTokenId = _tokenIds.current();
-        
-        _mint(recipient, newTokenId);
-        _setTokenURI(newTokenId, tokenURI);
-        
-        hasPurchased[recipient] = true;
-        
-        emit NFTMinted(recipient, newTokenId, tokenURI);
+        // Refund excess ETH
+        if (excess > 0) {
+            (bool success, ) = payable(msg.sender).call{value: excess}("");
+            require(success, "Refund failed");
+        }
         
         return newTokenId;
     }

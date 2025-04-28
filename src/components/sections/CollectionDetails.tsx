@@ -18,6 +18,7 @@ import { useCart } from "../../contexts/CartContext";
 import AuthModal from "../auth/AuthModal";
 import { purchaseNFT } from "../../lib/ethereum";
 import { getAvailableNfts, getNftContract } from "../../lib/nftContract";
+import { supabase } from "../../lib/supabase";
 
 // ETH price values
 const ETH_PRICE_USD = 0.001; // Price in ETH (0.001 ETH ≈ $2 at ~$2000/ETH)
@@ -32,7 +33,7 @@ const CollectionDetails: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [availableNfts, setAvailableNfts] = useState<number>(8);
+  const [available, setAvailable] = useState<number>(0);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
@@ -40,29 +41,28 @@ const CollectionDetails: React.FC = () => {
   const [isAccountSelectionOpen, setIsAccountSelectionOpen] = useState(false);
   const [networkName, setNetworkName] = useState<string>("Unknown");
 
-  const { isFullyAuthenticated, user, isWalletConnected } = useAuth();
+  const { isFullyAuthenticated, user, isWalletConnected, walletAddress } =
+    useAuth();
   const { addToCart, setIsCartOpen, hasItemInCart } = useCart();
 
   const isInCart = hasItemInCart(NFT_ITEM_ID);
 
-  // Check available NFTs
-  useEffect(() => {
-    if (window.ethereum) {
-      const checkAvailableNfts = async () => {
-        try {
-          const provider = new ethers.providers.Web3Provider(window.ethereum);
-          const available = await getAvailableNfts(provider);
-          setAvailableNfts(available);
-        } catch (error) {
-          console.error("Error checking available NFTs:", error);
-        }
-      };
+  const fetchAvailable = async () => {
+    if (!window.ethereum) return;
 
-      checkAvailableNfts();
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const count = await getAvailableNfts(provider);
+      setAvailable(count);
+    } catch (error) {
+      console.error("Error fetching available NFTs:", error);
     }
+  };
+
+  useEffect(() => {
+    fetchAvailable();
   }, []);
 
-  // Add this function to load available accounts
   const loadAccounts = async () => {
     try {
       if (!window.ethereum) return;
@@ -73,7 +73,6 @@ const CollectionDetails: React.FC = () => {
 
       setAvailableAccounts(accounts);
 
-      // Auto-select the first account if available
       if (accounts.length > 0 && !selectedAccount) {
         setSelectedAccount(accounts[0]);
       }
@@ -82,12 +81,10 @@ const CollectionDetails: React.FC = () => {
     }
   };
 
-  // Call loadAccounts when wallet is connected
   useEffect(() => {
     if (isWalletConnected) {
       loadAccounts();
 
-      // Listen for account changes
       if (window.ethereum) {
         window.ethereum.on("accountsChanged", (accounts: string[]) => {
           setAvailableAccounts(accounts);
@@ -97,20 +94,17 @@ const CollectionDetails: React.FC = () => {
     }
   }, [isWalletConnected]);
 
-  // Add function to check current network
   const checkCurrentNetwork = async () => {
     try {
       if (!window.ethereum) return;
 
       const chainId = await window.ethereum.request({ method: "eth_chainId" });
 
-      // Map chain IDs to network names
       const networks: Record<string, string> = {
         "0x1": "Ethereum Mainnet",
         "0xaa36a7": "Sepolia Testnet",
         "0x13881": "Polygon Mumbai",
         "0xa86a": "Avalanche C-Chain",
-        // Add more networks as needed
       };
 
       setNetworkName(networks[chainId] || `Unknown Network (${chainId})`);
@@ -119,12 +113,10 @@ const CollectionDetails: React.FC = () => {
     }
   };
 
-  // Call checkCurrentNetwork when wallet is connected
   useEffect(() => {
     if (isWalletConnected) {
       checkCurrentNetwork();
 
-      // Listen for network changes
       if (window.ethereum) {
         window.ethereum.on("chainChanged", () => {
           checkCurrentNetwork();
@@ -138,11 +130,10 @@ const CollectionDetails: React.FC = () => {
   };
 
   const increaseQuantity = () => {
-    if (quantity < availableNfts) setQuantity(quantity + 1);
+    if (quantity < available) setQuantity(quantity + 1);
   };
 
   const handlePurchase = () => {
-    // Reset messages
     setError(null);
     setSuccessMessage(null);
 
@@ -164,7 +155,6 @@ const CollectionDetails: React.FC = () => {
     }
 
     try {
-      // If fully authenticated, add to cart
       addToCart({
         id: NFT_ITEM_ID,
         name: "Turtle Timepiece Genesis",
@@ -173,7 +163,6 @@ const CollectionDetails: React.FC = () => {
         image: "/videos/nft-video.mp4",
       });
 
-      // Show success message and open the cart
       setSuccessMessage("Added to cart successfully!");
       setTimeout(() => {
         setSuccessMessage(null);
@@ -186,8 +175,23 @@ const CollectionDetails: React.FC = () => {
     }
   };
 
+  const canMint = async (email: string | undefined | null) => {
+    if (!email) return false;
+
+    const { data, error } = await supabase
+      .from("minted_emails")
+      .select("email")
+      .eq("email", email);
+
+    if (error) {
+      console.error("Error checking mint status:", error);
+      return false;
+    }
+
+    return data && data.length === 0;
+  };
+
   const handleDirectPurchase = async () => {
-    // Reset messages
     setError(null);
     setSuccessMessage(null);
     setTxHash(null);
@@ -203,12 +207,16 @@ const CollectionDetails: React.FC = () => {
       return;
     }
 
-    if (availableNfts <= 0) {
+    if (available <= 0) {
       setError("No NFTs available for purchase");
       return;
     }
 
-    // If multiple accounts available and none selected, show selection UI
+    if (!(await canMint(user?.email))) {
+      setError("This email has already minted an NFT");
+      return;
+    }
+
     if (availableAccounts.length > 1 && !selectedAccount) {
       setIsAccountSelectionOpen(true);
       return;
@@ -216,85 +224,34 @@ const CollectionDetails: React.FC = () => {
 
     try {
       setIsPurchasing(true);
-
-      // Show network information in the message
       setSuccessMessage(`Preparing transaction on ${networkName}...`);
 
-      // Purchase the NFT directly from the contract with selected account
-      const result = await purchaseNFT(selectedAccount || undefined);
+      const result = await purchaseNFT();
 
       if (result.status === "success") {
         setTxHash(result.transactionHash || null);
+
+        if (user?.email && walletAddress) {
+          const { error: supabaseError } = await supabase
+            .from("minted_emails")
+            .insert([
+              {
+                email: user.email,
+                wallet_address: walletAddress,
+                minted_at: new Date(),
+              },
+            ]);
+
+          if (supabaseError) {
+            console.error("Error recording mint:", supabaseError);
+          }
+        }
+
         setSuccessMessage(
           "NFT purchased successfully! It will appear in your wallet shortly."
         );
 
-        // Wait for transaction to be mined
-        const waitForConfirmation = async () => {
-          try {
-            // Check if transaction is confirmed
-            if (!window.ethereum || !result.transactionHash) return;
-
-            // Create provider using ethers directly
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-
-            // Wait for transaction receipt
-            const receipt = await provider.getTransactionReceipt(
-              result.transactionHash
-            );
-
-            if (receipt && receipt.confirmations > 0) {
-              // Transaction confirmed - now get the updated NFT count directly from contract
-              const contract = await getNftContract(provider);
-              const currentCount = await contract.getTokenCount();
-              const maxSupply = 8;
-              const available = maxSupply - currentCount.toNumber();
-
-              // Update the UI with the actual count from the blockchain
-              setAvailableNfts(available);
-              console.log("Updated NFT count from blockchain:", available);
-            } else {
-              // Not confirmed yet, check again in 3 seconds
-              setTimeout(waitForConfirmation, 3000);
-            }
-          } catch (error) {
-            console.error("Error checking transaction confirmation:", error);
-            // Fallback to direct check after 15 seconds regardless of errors
-            setTimeout(checkAvailableNftsDirectly, 15000);
-          }
-        };
-
-        // Fallback function to directly check NFT count
-        const checkAvailableNftsDirectly = async () => {
-          try {
-            if (window.ethereum) {
-              // Create provider using ethers directly
-              const provider = new ethers.providers.Web3Provider(
-                window.ethereum
-              );
-
-              // Force the provider to refresh its cache
-              await provider.send("eth_chainId", []);
-
-              // Get count from contract directly
-              const available = await getAvailableNfts(provider);
-
-              setAvailableNfts(available);
-              console.log(
-                "Force updated NFT count from blockchain:",
-                available
-              );
-            }
-          } catch (error) {
-            console.error("Error directly checking NFT count:", error);
-          }
-        };
-
-        // Start waiting for confirmation
-        waitForConfirmation();
-
-        // Also set a backup timer to check directly after 15 seconds
-        setTimeout(checkAvailableNftsDirectly, 15000);
+        await fetchAvailable();
       } else {
         setError(result.errorMessage || "Purchase failed");
       }
@@ -313,7 +270,6 @@ const CollectionDetails: React.FC = () => {
       return;
     }
 
-    // Handle make offer logic
     alert("Making an offer for Turtle Timepiece Genesis");
   };
 
@@ -321,7 +277,6 @@ const CollectionDetails: React.FC = () => {
     setIsCartOpen(true);
   };
 
-  // Add this account selection UI within your component
   const renderAccountSelection = () => {
     if (!isAccountSelectionOpen) return null;
 
@@ -340,7 +295,6 @@ const CollectionDetails: React.FC = () => {
                 onClick={() => {
                   setSelectedAccount(account);
                   setIsAccountSelectionOpen(false);
-                  // Trigger purchase after selection
                   setTimeout(() => handleDirectPurchase(), 100);
                 }}
                 className={`w-full text-left p-3 rounded-lg flex items-center ${
@@ -370,6 +324,10 @@ const CollectionDetails: React.FC = () => {
     );
   };
 
+  const handleRefreshCount = () => {
+    fetchAvailable();
+  };
+
   return (
     <>
       <div className="min-h-screen bg-[#0B1120] pt-32 pb-16">
@@ -383,7 +341,6 @@ const CollectionDetails: React.FC = () => {
           </Link>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Left Column - Video */}
             <div className="relative">
               <div className="aspect-square rounded-2xl overflow-hidden bg-black/40">
                 <video
@@ -421,7 +378,6 @@ const CollectionDetails: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Column - Details */}
             <div>
               <div className="mb-8">
                 <div className="text-[#3BA7DB] text-sm mb-2">
@@ -448,27 +404,9 @@ const CollectionDetails: React.FC = () => {
                   <div className="text-right">
                     <div className="text-gray-400 text-sm mb-1">Available</div>
                     <div className="text-xl font-bold text-white flex items-center justify-end">
-                      {availableNfts} NFTs
+                      {available} NFTs
                       <button
-                        onClick={async () => {
-                          if (window.ethereum) {
-                            try {
-                              const provider =
-                                new ethers.providers.Web3Provider(
-                                  window.ethereum
-                                );
-                              const available = await getAvailableNfts(
-                                provider
-                              );
-                              setAvailableNfts(available);
-                            } catch (error) {
-                              console.error(
-                                "Error refreshing NFT count:",
-                                error
-                              );
-                            }
-                          }
-                        }}
+                        onClick={handleRefreshCount}
                         className="ml-2 p-1 rounded-full hover:bg-[#1A191F]/50"
                         title="Refresh NFT count"
                       >
@@ -496,14 +434,13 @@ const CollectionDetails: React.FC = () => {
                     <button
                       onClick={increaseQuantity}
                       className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors"
-                      disabled={quantity >= availableNfts}
+                      disabled={quantity >= available}
                     >
                       <Plus size={20} />
                     </button>
                   </div>
                 </div>
 
-                {/* Status messages */}
                 {error && (
                   <div className="mb-4 p-3 bg-red-900/20 border border-red-800/30 rounded-lg text-red-300 text-sm flex items-center">
                     <AlertCircle size={16} className="mr-2 flex-shrink-0" />
@@ -536,7 +473,7 @@ const CollectionDetails: React.FC = () => {
                   </div>
                 )}
 
-                {availableNfts <= 0 && (
+                {available <= 0 && (
                   <div className="mb-4 p-3 bg-gray-900/20 border border-gray-800/30 rounded-lg text-gray-300 text-sm">
                     All NFTs have been sold
                   </div>
@@ -556,13 +493,13 @@ const CollectionDetails: React.FC = () => {
                       <button
                         onClick={handlePurchase}
                         className="flex-1 bg-[#00BCD4] hover:bg-[#00ACC1] text-white font-medium py-3 px-6 rounded-lg transition-colors"
-                        disabled={availableNfts <= 0}
+                        disabled={available <= 0}
                       >
                         Add to Cart
                       </button>
                       <button
                         onClick={handleDirectPurchase}
-                        disabled={isPurchasing || availableNfts <= 0}
+                        disabled={isPurchasing || available <= 0}
                         className="flex-1 bg-[#4A148C] hover:bg-[#6A1B9A] text-white font-medium py-3 px-6 rounded-lg transition-colors"
                       >
                         {isPurchasing ? "Processing..." : "Buy Now"}
@@ -630,11 +567,9 @@ const CollectionDetails: React.FC = () => {
             </div>
           </div>
 
-          {/* Account and Network Info */}
           {isWalletConnected && (
             <div className="bg-[#13111C]/60 p-4 rounded-xl mb-6">
               <div className="flex flex-wrap gap-4 justify-between items-center">
-                {/* Account Info */}
                 {availableAccounts.length > 0 && (
                   <div className="flex items-center">
                     <div>
@@ -657,7 +592,6 @@ const CollectionDetails: React.FC = () => {
                   </div>
                 )}
 
-                {/* Network Info */}
                 <div className="flex items-center">
                   <div>
                     <span className="text-sm text-gray-400">Network:</span>
@@ -686,13 +620,11 @@ const CollectionDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Auth Modal */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
 
-      {/* Account Selection Modal */}
       {renderAccountSelection()}
     </>
   );

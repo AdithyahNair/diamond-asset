@@ -108,7 +108,6 @@ export const sendTransaction = async (
             from,
             to: SELLER_ADDRESS,
             value: value.toString(16),
-            gas: "0x30D40", // 200,000 gas, much higher than minimum
             chainId: "0xaa36a7", // Ensure we're using Sepolia testnet
           },
         ],
@@ -159,7 +158,7 @@ export const useEthereumTransaction = () => {
   ): Promise<TransactionResult> => {
     try {
       await writeContract({
-        address: SELLER_ADDRESS,
+        address: SELLER_ADDRESS as `0x${string}`,
         abi: [], // Empty ABI since we're just sending ETH
         functionName: "", // No function name needed for direct ETH transfer
         value: parseEther(amountInEth.toString()),
@@ -187,19 +186,27 @@ export const useEthereumTransaction = () => {
 
   const buyNFT = async (): Promise<TransactionResult> => {
     try {
+      // Get the current user's address
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const userAddress = accounts[0];
+
       await writeContract({
-        address: NFT_CONTRACT_ADDRESS,
+        address: NFT_CONTRACT_ADDRESS as `0x${string}`,
         abi: [
           {
             name: "mintWithETH",
             type: "function",
             stateMutability: "payable",
-            inputs: [],
-            outputs: [],
+            inputs: [{ name: "recipient", type: "address" }],
+            outputs: [{ name: "", type: "uint256" }],
           },
         ],
         functionName: "mintWithETH",
-        value: parseEther(NFT_PRICE.toString()),
+        args: [userAddress],
+        // We'll let the contract determine the price
+        value: parseEther("0.001"), // This will be adjusted by the contract
       });
 
       if (isConfirming) {
@@ -215,10 +222,29 @@ export const useEthereumTransaction = () => {
       };
     } catch (error) {
       console.error("NFT purchase failed:", error);
+
+      // Provide more specific error messages
+      let errorMessage = "NFT purchase failed";
+      if (error instanceof Error) {
+        if (error.message.includes("Max supply reached")) {
+          errorMessage = "All NFTs have been sold out";
+        } else if (error.message.includes("Insufficient ETH sent")) {
+          errorMessage =
+            "Insufficient payment. Please send the correct amount.";
+        } else if (
+          error.message.includes("Address has already purchased an NFT")
+        ) {
+          errorMessage = "You have already purchased an NFT";
+        } else if (error.message.includes("execution reverted")) {
+          errorMessage = "Transaction failed. The contract may be paused.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       return {
         status: "error",
-        errorMessage:
-          error instanceof Error ? error.message : "NFT purchase failed",
+        errorMessage,
       };
     }
   };
@@ -313,7 +339,6 @@ export const purchaseNFT = async (): Promise<TransactionResult> => {
           from,
           to: NFT_CONTRACT_ADDRESS,
           value: value.toString(16),
-          gas: "0x30D40",
           chainId: "0xaa36a7",
           data,
         },
@@ -337,11 +362,6 @@ export const purchaseNFT = async (): Promise<TransactionResult> => {
 // Define Ethereum window interface
 declare global {
   interface Window {
-    ethereum: {
-      request: (args: {
-        method: string;
-        params?: unknown[];
-      }) => Promise<unknown>;
-    };
+    ethereum?: any;
   }
 }
