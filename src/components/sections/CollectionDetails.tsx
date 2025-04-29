@@ -217,8 +217,12 @@ const CollectionDetails: React.FC = () => {
     setTxHash(null);
 
     try {
+      console.log("Starting NFT purchase process...");
+
       // Check if user has already purchased
       const hasPurchased = await hasUserPurchasedNFT(user.email);
+      console.log("Has user purchased before:", hasPurchased);
+
       if (hasPurchased) {
         setError("You have already purchased an NFT");
         setIsPurchasing(false);
@@ -227,12 +231,14 @@ const CollectionDetails: React.FC = () => {
 
       let result;
       if (quantity === 1) {
-        // Single NFT purchase
+        console.log("Initiating single NFT purchase...");
         result = await purchaseNFT();
       } else {
-        // Batch purchase for multiple NFTs
+        console.log("Initiating batch purchase for", quantity, "NFTs...");
         result = await batchPurchaseNFT(quantity);
       }
+
+      console.log("Purchase result:", result);
 
       if (result.status === "error") {
         setError(result.errorMessage || "Purchase failed");
@@ -240,19 +246,49 @@ const CollectionDetails: React.FC = () => {
         return;
       }
 
-      // Set transaction hash only if it exists
+      // Set transaction hash and wait for confirmation
       if (result.transactionHash) {
+        console.log("Transaction hash:", result.transactionHash);
         setTxHash(result.transactionHash);
+
+        // Wait for transaction confirmation
+        console.log("Waiting for transaction confirmation...");
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const receipt = await provider.waitForTransaction(
+          result.transactionHash
+        );
+
+        if (!receipt) {
+          throw new Error("Failed to get transaction receipt");
+        }
+
+        if (receipt.status === 0) {
+          throw new Error("Transaction failed");
+        }
+
+        console.log("Transaction confirmed!");
+
+        // Only record in Supabase after transaction confirmation
+        console.log("Recording mint in Supabase...");
+        console.log("User email:", user.email);
+        console.log("Wallet address:", walletAddress);
+
+        try {
+          const mintRecord = await recordMintedNFT(user.email, walletAddress);
+          console.log("Mint record result:", mintRecord);
+
+          const updateStatus = await updateNFTPurchaseStatus(user.email);
+          console.log("Update status result:", updateStatus);
+        } catch (dbError) {
+          console.error("Database error:", dbError);
+          // Continue execution even if database update fails
+        }
+
+        setSuccessMessage(
+          `Successfully purchased ${quantity} NFT${quantity > 1 ? "s" : ""}!`
+        );
+        await fetchAvailable(); // Refresh available count
       }
-
-      // Record the purchase in Supabase
-      await recordMintedNFT(user.email, walletAddress);
-      await updateNFTPurchaseStatus(user.email);
-
-      setSuccessMessage(
-        `Successfully purchased ${quantity} NFT${quantity > 1 ? "s" : ""}!`
-      );
-      await fetchAvailable(); // Refresh available count
     } catch (error) {
       console.error("Purchase error:", error);
       setError("Failed to complete the purchase. Please try again.");

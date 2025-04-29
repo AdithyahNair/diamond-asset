@@ -91,6 +91,8 @@ export const getSession = async () => {
 // Record a minted NFT
 export const recordMintedNFT = async (email: string, walletAddress: string) => {
   try {
+    console.log("Attempting to record mint with:", { email, walletAddress });
+
     const { data, error } = await supabase
       .from("minted_emails")
       .insert([
@@ -103,13 +105,24 @@ export const recordMintedNFT = async (email: string, walletAddress: string) => {
       .select();
 
     if (error) {
-      console.error("Error recording mint:", error);
+      console.error("Supabase error recording mint:", {
+        error,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        message: error.message,
+      });
       throw error;
     }
 
+    console.log("Successfully recorded mint:", data);
     return { data, error: null };
   } catch (error) {
-    console.error("Error recording mint:", error);
+    console.error("Error in recordMintedNFT:", {
+      error,
+      errorMessage: error instanceof Error ? error.message : "Unknown error",
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     return { data: null, error };
   }
 };
