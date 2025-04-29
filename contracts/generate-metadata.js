@@ -62,18 +62,20 @@ for (let i = 1; i <= 8; i++) {
   });
 
   // Write metadata to file
-  fs.writeFileSync(
-    path.join(metadataDir, `${i}.json`),
-    JSON.stringify(metadata, null, 2)
-  );
-
-  console.log(`Generated metadata for NFT #${i}`);
+  const metadataPath = path.join(metadataDir, `${i}.json`);
+  try {
+    fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
+    console.log(`Generated metadata for NFT #${i}`);
+  } catch (error) {
+    console.error(`Error generating metadata for NFT #${i}:`, error.message);
+    process.exit(1);
+  }
 }
 
-console.log("All metadata files generated successfully!");
+console.log("\nAll metadata files generated successfully!");
 console.log("\nNext steps:");
 console.log("1. Upload the metadata folder to IPFS (Pinata)");
-console.log(
-  "2. Save the IPFS CID in your .env file as IPFS_METADATA_FOLDER_CID"
-);
-console.log("3. Run the mint script with 'npm run mint'");
+console.log("2. Set these values in your .env file:");
+console.log(`   IPFS_VIDEO_CID=${videoCID}`);
+console.log("   IPFS_METADATA_FOLDER_CID=<new-metadata-folder-cid>");
+console.log("3. Run 'node contracts/set-base-uri.js' to update the contract");

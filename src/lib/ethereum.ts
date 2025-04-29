@@ -1,5 +1,6 @@
 import { parseEther } from "viem";
 import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { ethers } from "ethers";
 import { NFT_CONTRACT_ADDRESS, NFT_PRICE } from "./nftContract";
 
 // The seller's wallet address (where payments will be sent)
@@ -261,13 +262,181 @@ function padAddress(address: string) {
 }
 
 /**
- * Purchases an NFT from the contract
+ * Check if user has sufficient balance
  *
+ * @param quantity - Number of NFTs to check
+ * @returns True if user has sufficient balance, false otherwise
+ */
+export const checkBalance = async (quantity: number): Promise<boolean> => {
+  try {
+    if (!window.ethereum) throw new Error("MetaMask is not installed");
+
+    const accounts = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
+    const account = accounts[0];
+
+    // Get user's balance
+    const balance = await window.ethereum.request({
+      method: "eth_getBalance",
+      params: [account, "latest"],
+    });
+
+    // Convert balance from hex to decimal
+    const balanceInWei = BigInt(balance);
+    const requiredAmount = parseEther(NFT_PRICE.toString()) * BigInt(quantity);
+
+    return balanceInWei >= requiredAmount;
+  } catch (error) {
+    console.error("Error checking balance:", error);
+    return false;
+  }
+};
+
+/**
+ * Purchase multiple NFTs in a single transaction
+ *
+ * @param quantity - Number of NFTs to purchase
  * @returns Transaction result object
  */
+export const batchPurchaseNFT = async (
+  quantity: number
+): Promise<TransactionResult> => {
+  try {
+    if (!window.ethereum) throw new Error("MetaMask is not installed");
+
+    // Check network and switch if needed
+    const chainId = await window.ethereum.request({ method: "eth_chainId" });
+    const sepoliaChainId = "0xaa36a7";
+    if (chainId !== sepoliaChainId) {
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: sepoliaChainId }],
+        });
+      } catch (error) {
+        const switchError = error as any;
+        if (switchError.code === 4902) {
+          try {
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [
+                {
+                  chainId: sepoliaChainId,
+                  chainName: "Sepolia Testnet",
+                  nativeCurrency: {
+                    name: "ETH",
+                    symbol: "ETH",
+                    decimals: 18,
+                  },
+                  rpcUrls: ["https://sepolia.infura.io/v3/"],
+                  blockExplorerUrls: ["https://sepolia.etherscan.io"],
+                },
+              ],
+            });
+          } catch (addError) {
+            console.error("Error adding Sepolia network:", addError);
+            return {
+              status: "error",
+              errorMessage:
+                "Could not add Sepolia network. Please try again or add it manually.",
+            };
+          }
+        } else {
+          console.error("Error switching to Sepolia:", switchError);
+          return {
+            status: "error",
+            errorMessage: `Could not switch to Sepolia network: ${switchError.message}`,
+          };
+        }
+      }
+    }
+
+    const accounts = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
+    const from = accounts[0];
+
+    // Check balance first
+    const hasBalance = await checkBalance(quantity);
+    if (!hasBalance) {
+      return {
+        status: "error",
+        errorMessage: "Insufficient funds to complete the purchase",
+      };
+    }
+
+    const value = parseEther(NFT_PRICE.toString()) * BigInt(quantity);
+
+    // Function selector for batchMintWithETH(address,uint256)
+    const functionSelector = "0x3f2e13d5"; // This is the first 4 bytes of keccak256("batchMintWithETH(address,uint256)")
+    const encodedParams = encodeParameters(
+      ["address", "uint256"],
+      [from, quantity]
+    );
+    const data = functionSelector + encodedParams.slice(2); // Remove '0x' from encoded params
+
+    const transactionHash = await window.ethereum.request({
+      method: "eth_sendTransaction",
+      params: [
+        {
+          from,
+          to: NFT_CONTRACT_ADDRESS,
+          value: value.toString(16), // Convert to hex
+          chainId: sepoliaChainId,
+          data,
+        },
+      ],
+    });
+
+    return {
+      status: "success",
+      transactionHash: transactionHash as string,
+    };
+  } catch (error) {
+    const err = error as Error;
+    console.error("NFT batch purchase failed:", err);
+
+    let errorMessage = "Failed to purchase NFTs";
+    if (err.message.includes("Max supply reached")) {
+      errorMessage = "All NFTs have been sold out";
+    } else if (err.message.includes("Insufficient ETH sent")) {
+      errorMessage = "Insufficient payment. Please send the correct amount.";
+    } else if (err.message.includes("Would exceed max supply")) {
+      errorMessage =
+        "Cannot mint requested quantity - would exceed maximum supply";
+    } else if (err.message.includes("execution reverted")) {
+      errorMessage = "Transaction failed. The contract may be paused.";
+    } else {
+      errorMessage = err.message;
+    }
+
+    return {
+      status: "error",
+      errorMessage,
+    };
+  }
+};
+
+// Helper function to encode parameters
+function encodeParameters(types: string[], values: any[]): string {
+  const abiCoder = new ethers.AbiCoder();
+  return abiCoder.encode(types, values);
+}
+
+// Original single NFT purchase function
 export const purchaseNFT = async (): Promise<TransactionResult> => {
   try {
     if (!window.ethereum) throw new Error("MetaMask is not installed");
+
+    // Check balance first
+    const hasBalance = await checkBalance(1);
+    if (!hasBalance) {
+      return {
+        status: "error",
+        errorMessage: "Insufficient funds to complete the purchase",
+      };
+    }
 
     const chainId = await window.ethereum.request({ method: "eth_chainId" });
     const sepoliaChainId = "0xaa36a7";
@@ -278,7 +447,7 @@ export const purchaseNFT = async (): Promise<TransactionResult> => {
           params: [{ chainId: sepoliaChainId }],
         });
       } catch (error) {
-        const switchError = error as EthereumProviderError;
+        const switchError = error as any;
         if (switchError.code === 4902) {
           try {
             await window.ethereum.request({
@@ -328,7 +497,7 @@ export const purchaseNFT = async (): Promise<TransactionResult> => {
     const from = accounts[0];
     const value = parseEther(NFT_PRICE.toString());
 
-    // Correct function selector for mintWithETH(address)
+    // Function selector for mintWithETH(address)
     const functionSelector = "0x5afcb497";
     const data = functionSelector + padAddress(from);
 
@@ -339,7 +508,7 @@ export const purchaseNFT = async (): Promise<TransactionResult> => {
           from,
           to: NFT_CONTRACT_ADDRESS,
           value: value.toString(16),
-          chainId: "0xaa36a7",
+          chainId: sepoliaChainId,
           data,
         },
       ],

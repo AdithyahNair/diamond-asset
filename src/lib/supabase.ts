@@ -11,11 +11,29 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Create Supabase client with session handling options
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    storage: window.localStorage,
+  },
+});
 
 // Initialize user profile after signup
 const initializeUserProfile = async (userId: string, email: string) => {
   try {
+    // Check if profile already exists
+    const { data: existingProfile } = await supabase
+      .from("user_profiles")
+      .select()
+      .eq("user_id", userId)
+      .single();
+
+    if (existingProfile) {
+      return;
+    }
+
     const { error } = await supabase.from("user_profiles").insert([
       {
         user_id: userId,

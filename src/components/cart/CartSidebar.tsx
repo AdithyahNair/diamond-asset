@@ -6,14 +6,15 @@ import {
   CreditCard,
   Bitcoin,
   Loader2,
-  AlertCircle,
-  Trash2,
-  Plus,
-  Minus,
 } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { sendTransaction } from "../../lib/ethereum";
+import {
+  sendTransaction,
+  batchPurchaseNFT,
+  checkBalance,
+} from "../../lib/ethereum";
+import { recordMintedNFT } from "../../lib/supabase";
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -28,7 +29,8 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
 }) => {
   const { items, removeFromCart, totalItems, totalPrice, clearCart } =
     useCart();
-  const { isFullyAuthenticated, user, isWalletConnected } = useAuth();
+  const { isFullyAuthenticated, user, isWalletConnected, walletAddress } =
+    useAuth();
   const [paymentMethod, setPaymentMethod] = React.useState<"crypto" | "card">(
     "crypto"
   );
@@ -49,6 +51,59 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
   // Calculate service fee (2.5% of subtotal)
   const serviceFee = totalPrice * 0.025;
   const finalTotal = totalPrice + serviceFee;
+
+  const handleCheckout = async () => {
+    if (!isFullyAuthenticated || !walletAddress) {
+      openAuthModal();
+      return;
+    }
+
+    setTransactionError(null);
+    setTransactionHash(null);
+    setTransactionSuccess(false);
+    setIsTransactionPending(true);
+
+    try {
+      // Check balance first
+      const totalQuantity = items.reduce((acc, item) => acc + item.quantity, 0);
+      const hasBalance = await checkBalance(totalQuantity);
+
+      if (!hasBalance) {
+        setTransactionError("Insufficient funds to complete the purchase");
+        setIsTransactionPending(false);
+        return;
+      }
+
+      // Process each item in the cart
+      const result = await batchPurchaseNFT(totalQuantity);
+
+      if (result.status === "success") {
+        setTransactionHash(result.transactionHash || null);
+        setTransactionSuccess(true);
+
+        // Record purchases in database
+        if (user?.email) {
+          try {
+            await recordMintedNFT(user.email, walletAddress);
+          } catch (error) {
+            console.error("Error recording purchase:", error);
+          }
+        }
+
+        // Clear the cart after successful purchase
+        clearCart();
+      } else {
+        setTransactionError(result.errorMessage || "Purchase failed");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      setTransactionError(
+        error instanceof Error ? error.message : "Failed to process checkout"
+      );
+    } finally {
+      setIsTransactionPending(false);
+    }
+  };
 
   // Handle the crypto payment
   const handleCryptoPayment = async () => {
@@ -293,77 +348,46 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                 </div>
               )}
 
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex gap-4 p-3 rounded-xl bg-[#1A2435] border border-gray-700 hover:border-gray-600 transition-all"
-                >
-                  {item.image ? (
-                    item.image.endsWith(".mp4") ? (
-                      <div className="h-24 w-24 rounded-lg overflow-hidden flex-shrink-0 border border-gray-700 shadow-sm relative group">
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                          <div className="bg-white/80 rounded-full p-1">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="text-[#1E9AD3]"
-                            >
-                              <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                            </svg>
-                          </div>
-                        </div>
-                        <video
-                          className="h-full w-full object-cover"
-                          muted
-                          loop
-                          autoPlay
-                          playsInline
-                        >
-                          <source src={item.image} type="video/mp4" />
-                        </video>
-                      </div>
-                    ) : (
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="h-24 w-24 rounded-lg object-cover flex-shrink-0 border border-gray-700 shadow-sm"
-                      />
-                    )
-                  ) : (
-                    <div className="h-24 w-24 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-700 shadow-sm">
-                      <ShoppingCart size={30} className="text-gray-600" />
-                    </div>
-                  )}
-
-                  <div className="flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-white font-medium">{item.name}</h3>
-                      <div className="text-lg text-white mt-1">
-                        {item.price} ETH
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center gap-1 text-gray-400">
-                        <span>Qty: {item.quantity}</span>
-                      </div>
-                      <button
-                        onClick={() => handleRemoveItem(item.id)}
-                        className="text-gray-500 hover:text-red-400 p-1 transition-colors"
+              <div className="flex-1 overflow-y-auto">
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex gap-4 p-4 mb-4 bg-white/5 rounded-xl"
+                  >
+                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-black/40">
+                      <video
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
                       >
-                        <Trash2 size={18} />
-                      </button>
+                        <source src={item.image} type="video/mp4" />
+                      </video>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-white">{item.name}</h4>
+                      <div className="text-sm text-gray-400 mt-1">
+                        Quantity: {item.quantity}
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <div className="text-[#1E9AD3]">
+                          {item.price} ETH
+                          <span className="text-gray-500 text-sm ml-1">
+                            × {item.quantity}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveItem(item.id)}
+                          className="text-sm text-red-400 hover:text-red-300"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
 
               <div className="mt-6 bg-[#1A2435] rounded-xl p-4 border border-gray-700">
                 <div className="space-y-2">
@@ -418,7 +442,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                 </div>
 
                 <button
-                  onClick={handlePurchase}
+                  onClick={handleCheckout}
                   disabled={isTransactionPending}
                   className={`w-full p-4 rounded-xl font-medium transition-all 
                     ${

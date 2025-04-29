@@ -17,6 +17,10 @@ async function main() {
 
   // Get Sepolia RPC URL from .env file
   const sepoliaRPC = process.env.SEPOLIA_RPC_URL;
+  if (!sepoliaRPC) {
+    console.error("Please set your SEPOLIA_RPC_URL in the .env file");
+    return;
+  }
 
   // Connect to the network
   const provider = new JsonRpcProvider(sepoliaRPC);
@@ -31,22 +35,31 @@ async function main() {
     wallet
   );
 
-  // Use a placeholder CID if needed
-  const metadataCID =
-    process.env.IPFS_METADATA_FOLDER_CID ||
-    "bafybeigw2vgfqwuihkj5cxjqr6vtjdp475xzo7elalwd33bbkoo3fin4om";
+  // Get metadata CID from .env
+  const metadataCID = process.env.IPFS_METADATA_FOLDER_CID;
+  if (!metadataCID) {
+    console.error("Please set IPFS_METADATA_FOLDER_CID in your .env file");
+    return;
+  }
 
   const ipfsBaseURI = `ipfs://${metadataCID}/`;
   console.log("Setting base URI to:", ipfsBaseURI);
 
-  const txSetBaseURI = await nftContract.setBaseURI(ipfsBaseURI);
-  await txSetBaseURI.wait();
-  console.log("Base URI set successfully");
+  try {
+    const txSetBaseURI = await nftContract.setBaseURI(ipfsBaseURI);
+    console.log("Transaction sent:", txSetBaseURI.hash);
+    console.log("Waiting for confirmation...");
+    await txSetBaseURI.wait();
+    console.log("Base URI set successfully!");
+  } catch (error) {
+    console.error("Error setting base URI:", error.message);
+    process.exit(1);
+  }
 }
 
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error(error);
+    console.error("Error:", error.message);
     process.exit(1);
   });

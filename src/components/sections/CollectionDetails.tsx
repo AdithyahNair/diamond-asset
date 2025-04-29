@@ -1,8 +1,7 @@
-import React, { useState, useEffect, ReactNode } from "react";
+import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import {
   ArrowLeft,
-  Eye,
   Heart,
   Share2,
   RefreshCw,
@@ -16,12 +15,13 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import AuthModal from "../auth/AuthModal";
-import { purchaseNFT } from "../../lib/ethereum";
+import { purchaseNFT, batchPurchaseNFT } from "../../lib/ethereum";
 import { getAvailableNfts, getNftContract } from "../../lib/nftContract";
 import {
   supabase,
   hasUserPurchasedNFT,
   updateNFTPurchaseStatus,
+  recordMintedNFT,
 } from "../../lib/supabase";
 
 // ETH price values
@@ -158,6 +158,12 @@ const CollectionDetails: React.FC = () => {
       return;
     }
 
+    if (quantity > available) {
+      setError("Cannot add more NFTs than available");
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
     try {
       addToCart({
         id: NFT_ITEM_ID,
@@ -196,74 +202,60 @@ const CollectionDetails: React.FC = () => {
   };
 
   const handleDirectPurchase = async () => {
+    if (!isFullyAuthenticated || !user?.email) {
+      setError("Please log in to purchase NFTs");
+      return;
+    }
+
+    if (!isWalletConnected || !walletAddress) {
+      setError("Please connect your wallet to purchase NFTs");
+      return;
+    }
+
     setError(null);
-    setSuccessMessage(null);
+    setIsPurchasing(true);
     setTxHash(null);
 
-    if (!isFullyAuthenticated) {
-      setIsAuthModalOpen(true);
-      return;
-    }
-
-    if (!isWalletConnected) {
-      setError("Please connect your wallet to purchase NFTs");
-      setTimeout(() => setError(null), 3000);
-      return;
-    }
-
-    if (available <= 0) {
-      setError("No NFTs available for purchase");
-      return;
-    }
-
-    if (!user?.email) {
-      setError("Please sign in with your email first");
-      return;
-    }
-
     try {
-      // Check if user has already purchased an NFT
+      // Check if user has already purchased
       const hasPurchased = await hasUserPurchasedNFT(user.email);
       if (hasPurchased) {
-        setError("You have already purchased an NFT with this email");
+        setError("You have already purchased an NFT");
+        setIsPurchasing(false);
         return;
       }
 
-      if (availableAccounts.length > 1 && !selectedAccount) {
-        setIsAccountSelectionOpen(true);
-        return;
-      }
-
-      setIsPurchasing(true);
-      setSuccessMessage(`Preparing transaction on ${networkName}...`);
-
-      const result = await purchaseNFT();
-
-      if (result.status === "success") {
-        setTxHash(result.transactionHash || null);
-
-        // Update the user's NFT purchase status
-        if (user.email) {
-          const { success, error: updateError } = await updateNFTPurchaseStatus(
-            user.email
-          );
-          if (!success) {
-            console.error("Error updating purchase status:", updateError);
-          }
-        }
-
-        setSuccessMessage(
-          "NFT purchased successfully! It will appear in your wallet shortly."
-        );
-
-        await fetchAvailable();
+      let result;
+      if (quantity === 1) {
+        // Single NFT purchase
+        result = await purchaseNFT();
       } else {
-        setError(result.errorMessage || "Purchase failed");
+        // Batch purchase for multiple NFTs
+        result = await batchPurchaseNFT(quantity);
       }
-    } catch (err) {
-      const error = err as Error;
-      console.error("Error purchasing NFT:", error);
-      setError(error.message || "Failed to purchase NFT");
+
+      if (result.status === "error") {
+        setError(result.errorMessage || "Purchase failed");
+        setIsPurchasing(false);
+        return;
+      }
+
+      // Set transaction hash only if it exists
+      if (result.transactionHash) {
+        setTxHash(result.transactionHash);
+      }
+
+      // Record the purchase in Supabase
+      await recordMintedNFT(user.email, walletAddress);
+      await updateNFTPurchaseStatus(user.email);
+
+      setSuccessMessage(
+        `Successfully purchased ${quantity} NFT${quantity > 1 ? "s" : ""}!`
+      );
+      await fetchAvailable(); // Refresh available count
+    } catch (error) {
+      console.error("Purchase error:", error);
+      setError("Failed to complete the purchase. Please try again.");
     } finally {
       setIsPurchasing(false);
     }
@@ -423,7 +415,7 @@ const CollectionDetails: React.FC = () => {
 
                 <div className="mb-6">
                   <label className="text-gray-400 text-sm mb-2 block">
-                    Quantity
+                    Quantity (Max: {available})
                   </label>
                   <div className="flex items-center gap-4">
                     <button
@@ -443,6 +435,10 @@ const CollectionDetails: React.FC = () => {
                     >
                       <Plus size={20} />
                     </button>
+                  </div>
+                  <div className="mt-2 text-sm text-gray-400">
+                    Total Price: {(ETH_PRICE_USD * quantity).toFixed(3)} ETH ($
+                    {(USD_PRICE * quantity).toFixed(2)})
                   </div>
                 </div>
 

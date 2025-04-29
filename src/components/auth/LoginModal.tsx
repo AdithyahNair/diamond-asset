@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -10,21 +11,24 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
-    // Here you would implement actual authentication logic
     try {
-      // Simulating API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Login attempted with:", { email, password });
-
-      // On success
+      const { error: loginError } = await login(email, password);
+      if (loginError) {
+        setError(loginError.message);
+        return;
+      }
       onClose();
-    } catch (error) {
-      console.error("Login failed:", error);
+    } catch (err) {
+      setError("An unexpected error occurred");
+      console.error("Login failed:", err);
     } finally {
       setIsLoading(false);
     }
@@ -46,6 +50,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {error && (
+            <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
+
           <div>
             <label
               htmlFor="email"
