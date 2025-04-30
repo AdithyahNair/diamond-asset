@@ -28,16 +28,13 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
     // Price per NFT in ETH
     uint256 public mintPrice = 0.001 ether;
     
-    // Tracking which addresses have minted an NFT
-    mapping(address => bool) public hasPurchased;
-    
     // Events
     event NFTMinted(address owner, uint256 tokenId, string tokenURI);
     event ContractPaused(address indexed by);
     event ContractUnpaused(address indexed by);
     
     constructor() ERC721("Diamond Access Ticket", "DIAMOND") {
-        _baseTokenURI = "https://gateway.pinata.cloud/ipfs/bafybeia24wi54ltggaeq3524gdzjv77cxwmcpa64g45mclkfx3ccjednwm/";
+        _baseTokenURI = "";
     }
     
     /**
@@ -87,7 +84,6 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
     function mintWithETH(address recipient) external payable nonReentrant whenNotPaused returns (uint256) {
         require(_tokenIds.current() < MAX_SUPPLY, "Max supply reached");
         require(msg.value >= mintPrice, "Insufficient ETH sent");
-        require(!hasPurchased[recipient], "Address has already purchased an NFT");
         
         // Calculate excess ETH
         uint256 excess = msg.value - mintPrice;
@@ -97,14 +93,10 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
         
         _mint(recipient, newTokenId);
         
-        // Mark this address as having purchased an NFT
-        hasPurchased[recipient] = true;
+        // Let the ERC721URIStorage handle the token URI using baseURI
+        // We don't need to explicitly set the token URI here
         
-        // Set the token URI - here we're using the tokenId as part of the URI
-        string memory tokenURI = string(abi.encodePacked(_baseURI(), Strings.toString(newTokenId), ".json"));
-        _setTokenURI(newTokenId, tokenURI);
-        
-        emit NFTMinted(recipient, newTokenId, tokenURI);
+        emit NFTMinted(recipient, newTokenId, tokenURI(newTokenId));
         
         // Refund excess ETH
         if (excess > 0) {

@@ -1,6 +1,7 @@
 {
-  "address": "0x84f5e1368d2924c6da955893E65a168d0520742d",
+  "address": "0xA05051F67E1a4D8f81A42f7131d1333432aF259C",
   "network": "sepolia",
+  "deploymentTime": "2023-12-24T12:45:30.000Z",
   "abi": [
     {
       "inputs": [],

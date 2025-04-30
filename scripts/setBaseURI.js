@@ -1,42 +1,27 @@
 const hre = require("hardhat");
 
 async function main() {
-  // Get the contract address from contract-info.json
-  const contractInfo = require("../contract-info.json");
-  const contractAddress = contractInfo.address;
+  const [deployer] = await hre.ethers.getSigners();
+  console.log("Setting baseURI with account:", deployer.address);
 
-  console.log("Setting baseURI for TurtleTimepieceNFT at", contractAddress);
-
-  // Replace this with your actual IPFS or other metadata base URI
-  // This should be the URI where your metadata files are hosted, ending with a trailing slash
-  const newBaseURI =
-    "https://gateway.pinata.cloud/ipfs/bafybeia24wi54ltggaeq3524gdzjv77cxwmcpa64g45mclkfx3ccjednwm/";
-
-  // Connect to the contract
-  const TurtleTimepieceNFT = await hre.ethers.getContractFactory(
-    "TurtleTimepieceNFT"
+  // Get the contract instance
+  const contractAddress = "0xA05051F67E1a4D8f81A42f7131d1333432aF259C"; // Your deployed contract address
+  const contract = await hre.ethers.getContractAt(
+    "TurtleTimepieceNFT",
+    contractAddress
   );
-  const [signer] = await hre.ethers.getSigners();
 
-  console.log("Using account:", signer.address);
+  // Set the baseURI to the video URL
+  const baseURI =
+    "https://purple-bright-chinchilla-487.mypinata.cloud/ipfs/bafybeia24wi54ltggaeq3524gdzjv77cxwmcpa64g45mclkfx3ccjednwm";
 
-  // Get contract instance
-  const contract = TurtleTimepieceNFT.attach(contractAddress);
-
-  // Set the new base URI
-  console.log("Setting base URI to:", newBaseURI);
-  const tx = await contract.setBaseURI(newBaseURI);
-
-  console.log("Transaction hash:", tx.hash);
-  console.log("Waiting for confirmation...");
-
-  // Wait for the transaction to be mined
+  // Set the base URI
+  const tx = await contract.setBaseURI(baseURI);
   await tx.wait();
 
-  console.log("Base URI set successfully!");
+  console.log("Base URI set to:", baseURI);
 }
 
-// Execute the script
 main()
   .then(() => process.exit(0))
   .catch((error) => {
