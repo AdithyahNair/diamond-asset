@@ -59,7 +59,19 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       if (savedCart) {
         try {
           const parsedCart = JSON.parse(savedCart);
-          setItems(parsedCart);
+
+          // Ensure all items have quantity of 1
+          const fixedCart = parsedCart.map((item: CartItem) => ({
+            ...item,
+            quantity: 1,
+          }));
+
+          // Only keep one item if multiple items exist
+          if (fixedCart.length > 1) {
+            setItems([fixedCart[0]]);
+          } else {
+            setItems(fixedCart);
+          }
         } catch (e) {
           console.error("Failed to parse cart data:", e);
           // Clear invalid cart data
@@ -90,16 +102,17 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   }, [isFullyAuthenticated]);
 
   const addToCart = (item: CartItem) => {
-    setItems((prevItems) => {
-      const existingItem = prevItems.find((i) => i.id === item.id);
+    // Always force quantity to be 1
+    const newItem = { ...item, quantity: 1 };
 
-      if (existingItem) {
-        return prevItems.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
-        );
+    setItems((prevItems) => {
+      // If cart already has an item, replace it with the new one
+      if (prevItems.length > 0) {
+        return [newItem];
       }
 
-      return [...prevItems, item];
+      // Otherwise add the new item
+      return [newItem];
     });
   };
 
@@ -108,9 +121,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   };
 
   const updateQuantity = (itemId: string, quantity: number) => {
+    // Always force quantity to be 1 regardless of what's passed
     setItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === itemId ? { ...item, quantity } : item
+        item.id === itemId ? { ...item, quantity: 1 } : item
       )
     );
   };
@@ -126,12 +140,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     return items.some((item) => item.id === itemId);
   };
 
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  // Always count each item as quantity 1 regardless of the quantity field
+  const totalItems = items.length;
 
-  const totalPrice = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  // Calculate price based on each item having quantity 1
+  const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
 
   const value = {
     items,

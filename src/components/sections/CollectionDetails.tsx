@@ -5,8 +5,6 @@ import {
   Heart,
   Share2,
   RefreshCw,
-  Minus,
-  Plus,
   ShoppingCart,
   AlertCircle,
   Check,
@@ -15,7 +13,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import AuthModal from "../auth/AuthModal";
-import { purchaseNFT, batchPurchaseNFT } from "../../lib/ethereum";
+import { purchaseNFT } from "../../lib/ethereum";
 import { getAvailableNfts, getNftContract } from "../../lib/nftContract";
 import {
   supabase,
@@ -32,7 +30,6 @@ const USD_PRICE = 2; // USD equivalent (approximate)
 const NFT_ITEM_ID = "turtle-timepiece-genesis";
 
 const CollectionDetails: React.FC = () => {
-  const [quantity, setQuantity] = useState(1);
   const [liked, setLiked] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -129,14 +126,6 @@ const CollectionDetails: React.FC = () => {
     }
   }, [isWalletConnected]);
 
-  const decreaseQuantity = () => {
-    if (quantity > 1) setQuantity(quantity - 1);
-  };
-
-  const increaseQuantity = () => {
-    if (quantity < available) setQuantity(quantity + 1);
-  };
-
   const handlePurchase = () => {
     setError(null);
     setSuccessMessage(null);
@@ -158,8 +147,8 @@ const CollectionDetails: React.FC = () => {
       return;
     }
 
-    if (quantity > available) {
-      setError("Cannot add more NFTs than available");
+    if (available <= 0) {
+      setError("No NFTs available for purchase");
       setTimeout(() => setError(null), 3000);
       return;
     }
@@ -169,7 +158,7 @@ const CollectionDetails: React.FC = () => {
         id: NFT_ITEM_ID,
         name: "Turtle Timepiece Genesis",
         price: ETH_PRICE_USD,
-        quantity,
+        quantity: 1, // Always set quantity to 1
         image: "/videos/nft-video.mp4",
       });
 
@@ -217,28 +206,16 @@ const CollectionDetails: React.FC = () => {
     setTxHash(null);
 
     try {
-      console.log("Starting NFT purchase process...");
-
       // Check if user has already purchased
       const hasPurchased = await hasUserPurchasedNFT(user.email);
-      console.log("Has user purchased before:", hasPurchased);
-
       if (hasPurchased) {
         setError("You have already purchased an NFT");
         setIsPurchasing(false);
         return;
       }
 
-      let result;
-      if (quantity === 1) {
-        console.log("Initiating single NFT purchase...");
-        result = await purchaseNFT();
-      } else {
-        console.log("Initiating batch purchase for", quantity, "NFTs...");
-        result = await batchPurchaseNFT(quantity);
-      }
-
-      console.log("Purchase result:", result);
+      // Always purchase only one NFT
+      const result = await purchaseNFT();
 
       if (result.status === "error") {
         setError(result.errorMessage || "Purchase failed");
@@ -246,49 +223,17 @@ const CollectionDetails: React.FC = () => {
         return;
       }
 
-      // Set transaction hash and wait for confirmation
+      // Set transaction hash only if it exists
       if (result.transactionHash) {
-        console.log("Transaction hash:", result.transactionHash);
         setTxHash(result.transactionHash);
-
-        // Wait for transaction confirmation
-        console.log("Waiting for transaction confirmation...");
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const receipt = await provider.waitForTransaction(
-          result.transactionHash
-        );
-
-        if (!receipt) {
-          throw new Error("Failed to get transaction receipt");
-        }
-
-        if (receipt.status === 0) {
-          throw new Error("Transaction failed");
-        }
-
-        console.log("Transaction confirmed!");
-
-        // Only record in Supabase after transaction confirmation
-        console.log("Recording mint in Supabase...");
-        console.log("User email:", user.email);
-        console.log("Wallet address:", walletAddress);
-
-        try {
-          const mintRecord = await recordMintedNFT(user.email, walletAddress);
-          console.log("Mint record result:", mintRecord);
-
-          const updateStatus = await updateNFTPurchaseStatus(user.email);
-          console.log("Update status result:", updateStatus);
-        } catch (dbError) {
-          console.error("Database error:", dbError);
-          // Continue execution even if database update fails
-        }
-
-        setSuccessMessage(
-          `Successfully purchased ${quantity} NFT${quantity > 1 ? "s" : ""}!`
-        );
-        await fetchAvailable(); // Refresh available count
       }
+
+      // Record the purchase in Supabase
+      await recordMintedNFT(user.email, walletAddress);
+      await updateNFTPurchaseStatus(user.email);
+
+      setSuccessMessage("Successfully purchased NFT!");
+      await fetchAvailable(); // Refresh available count
     } catch (error) {
       console.error("Purchase error:", error);
       setError("Failed to complete the purchase. Please try again.");
@@ -449,32 +394,12 @@ const CollectionDetails: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mb-6">
-                  <label className="text-gray-400 text-sm mb-2 block">
-                    Quantity (Max: {available})
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={decreaseQuantity}
-                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors"
-                      disabled={quantity <= 1}
-                    >
-                      <Minus size={20} />
-                    </button>
-                    <span className="text-xl font-medium text-white min-w-[40px] text-center">
-                      {quantity}
-                    </span>
-                    <button
-                      onClick={increaseQuantity}
-                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors"
-                      disabled={quantity >= available}
-                    >
-                      <Plus size={20} />
-                    </button>
-                  </div>
-                  <div className="mt-2 text-sm text-gray-400">
-                    Total Price: {(ETH_PRICE_USD * quantity).toFixed(3)} ETH ($
-                    {(USD_PRICE * quantity).toFixed(2)})
+                <div className="mb-2 text-sm text-gray-400">
+                  <div className="p-3 bg-blue-900/20 border border-blue-800/30 rounded-lg text-blue-300">
+                    <p>
+                      Limited to 1 NFT per purchase. Total price:{" "}
+                      {ETH_PRICE_USD} ETH (${USD_PRICE})
+                    </p>
                   </div>
                 </div>
 

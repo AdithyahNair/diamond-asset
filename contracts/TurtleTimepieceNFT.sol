@@ -28,14 +28,16 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
     // Price per NFT in ETH
     uint256 public mintPrice = 0.001 ether;
     
+    // Tracking which addresses have minted an NFT
+    mapping(address => bool) public hasPurchased;
+    
     // Events
     event NFTMinted(address owner, uint256 tokenId, string tokenURI);
-    event BatchNFTMinted(address owner, uint256[] tokenIds);
     event ContractPaused(address indexed by);
     event ContractUnpaused(address indexed by);
     
     constructor() ERC721("Diamond Access Ticket", "DIAMOND") {
-        _baseTokenURI = "https://gateway.pinata.cloud/ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG/";
+        _baseTokenURI = "https://gateway.pinata.cloud/ipfs/bafybeia24wi54ltggaeq3524gdzjv77cxwmcpa64g45mclkfx3ccjednwm/";
     }
     
     /**
@@ -85,6 +87,7 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
     function mintWithETH(address recipient) external payable nonReentrant whenNotPaused returns (uint256) {
         require(_tokenIds.current() < MAX_SUPPLY, "Max supply reached");
         require(msg.value >= mintPrice, "Insufficient ETH sent");
+        require(!hasPurchased[recipient], "Address has already purchased an NFT");
         
         // Calculate excess ETH
         uint256 excess = msg.value - mintPrice;
@@ -93,6 +96,9 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
         uint256 newTokenId = _tokenIds.current();
         
         _mint(recipient, newTokenId);
+        
+        // Mark this address as having purchased an NFT
+        hasPurchased[recipient] = true;
         
         // Set the token URI - here we're using the tokenId as part of the URI
         string memory tokenURI = string(abi.encodePacked(_baseURI(), Strings.toString(newTokenId), ".json"));
@@ -107,47 +113,6 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
         }
         
         return newTokenId;
-    }
-
-    /**
-     * @dev Mint multiple NFTs in a single transaction
-     * @param recipient Address to receive the NFTs
-     * @param quantity Number of NFTs to mint
-     * @return tokenIds Array of newly minted token IDs
-     */
-    function batchMintWithETH(address recipient, uint256 quantity) external payable nonReentrant whenNotPaused returns (uint256[] memory) {
-        require(quantity > 0, "Must mint at least 1 NFT");
-        require(_tokenIds.current() + quantity <= MAX_SUPPLY, "Would exceed max supply");
-        require(msg.value >= mintPrice * quantity, "Insufficient ETH sent");
-        
-        // Calculate excess ETH
-        uint256 excess = msg.value - (mintPrice * quantity);
-        
-        uint256[] memory newTokenIds = new uint256[](quantity);
-        
-        for (uint256 i = 0; i < quantity; i++) {
-            _tokenIds.increment();
-            uint256 newTokenId = _tokenIds.current();
-            newTokenIds[i] = newTokenId;
-            
-            _mint(recipient, newTokenId);
-            
-            // Set the token URI
-            string memory tokenURI = string(abi.encodePacked(_baseURI(), Strings.toString(newTokenId), ".json"));
-            _setTokenURI(newTokenId, tokenURI);
-            
-            emit NFTMinted(recipient, newTokenId, tokenURI);
-        }
-        
-        emit BatchNFTMinted(recipient, newTokenIds);
-        
-        // Refund excess ETH
-        if (excess > 0) {
-            (bool success, ) = payable(msg.sender).call{value: excess}("");
-            require(success, "Refund failed");
-        }
-        
-        return newTokenIds;
     }
     
     /**
