@@ -266,7 +266,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({
                   onClick={() => setPaymentMethod("card")}
                   disabled
                 >
-                  Card (Soon)
+                  Credit/Debit Card
                 </button>
               </div>
             </div>
