@@ -13,8 +13,12 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import AuthModal from "../auth/AuthModal";
-import { purchaseNFT } from "../../lib/ethereum";
-import { getAvailableNfts, getNftContract } from "../../lib/nftContract";
+import {
+  getNftContract,
+  getAvailableNFTs,
+  purchaseNft,
+  markTokenAsPrePurchased,
+} from "../../lib/nftContract";
 import {
   supabase,
   hasUserPurchasedNFT,
@@ -35,28 +39,44 @@ const CollectionDetails: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [available, setAvailable] = useState<number>(0);
+  const [availableTokens, setAvailableTokens] = useState<number[]>([]);
+  const [selectedTokenId, setSelectedTokenId] = useState<number | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [availableAccounts, setAvailableAccounts] = useState<string[]>([]);
   const [isAccountSelectionOpen, setIsAccountSelectionOpen] = useState(false);
   const [networkName, setNetworkName] = useState<string>("Unknown");
+  const [paymentMethod, setPaymentMethod] = useState<"crypto" | "card">(
+    "crypto"
+  );
+  const [isProcessingCardPayment, setIsProcessingCardPayment] = useState(false);
 
-  const { isFullyAuthenticated, user, isWalletConnected, walletAddress } =
-    useAuth();
+  const {
+    isFullyAuthenticated,
+    user,
+    isWalletConnected,
+    walletAddress,
+    connectWallet,
+  } = useAuth();
   const { addToCart, setIsCartOpen, hasItemInCart } = useCart();
 
   const isInCart = hasItemInCart(NFT_ITEM_ID);
 
   const fetchAvailable = async () => {
-    if (!window.ethereum) return;
-
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const count = await getAvailableNfts(provider);
-      setAvailable(count);
+      const availableTokens = await getAvailableNFTs(provider);
+      setAvailableTokens(availableTokens);
+      setAvailable(availableTokens.length);
+
+      // Select the first available token by default
+      if (availableTokens.length > 0 && !selectedTokenId) {
+        setSelectedTokenId(availableTokens[0]);
+      }
     } catch (error) {
       console.error("Error fetching available NFTs:", error);
+      setError("Failed to fetch available NFTs");
     }
   };
 
@@ -190,14 +210,20 @@ const CollectionDetails: React.FC = () => {
     return data && data.length === 0;
   };
 
-  const handleDirectPurchase = async () => {
-    if (!isFullyAuthenticated || !user?.email) {
+  const handleCryptoPayment = async () => {
+    if (!user?.email) {
       setError("Please log in to purchase NFTs");
+      setIsAuthModalOpen(true);
       return;
     }
 
     if (!isWalletConnected || !walletAddress) {
-      setError("Please connect your wallet to purchase NFTs");
+      connectWallet();
+      return;
+    }
+
+    if (!selectedTokenId) {
+      setError("Please select an NFT to purchase");
       return;
     }
 
@@ -214,31 +240,90 @@ const CollectionDetails: React.FC = () => {
         return;
       }
 
-      // Always purchase only one NFT
-      const result = await purchaseNFT();
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
 
-      if (result.status === "error") {
-        setError(result.errorMessage || "Purchase failed");
+      // Purchase the selected NFT
+      const result = await purchaseNft(signer, selectedTokenId);
+
+      if (!result.success) {
+        setError(result.error || "Purchase failed");
         setIsPurchasing(false);
         return;
       }
 
-      // Set transaction hash only if it exists
-      if (result.transactionHash) {
-        setTxHash(result.transactionHash);
-      }
+      // Set transaction hash
+      setTxHash(result.transaction?.hash || null);
 
       // Record the purchase in Supabase
       await recordMintedNFT(user.email, walletAddress);
       await updateNFTPurchaseStatus(user.email);
 
       setSuccessMessage("Successfully purchased NFT!");
-      await fetchAvailable(); // Refresh available count
+      await fetchAvailable(); // Refresh available tokens
     } catch (error) {
       console.error("Purchase error:", error);
       setError("Failed to complete the purchase. Please try again.");
     } finally {
       setIsPurchasing(false);
+    }
+  };
+
+  const handleCardPayment = async () => {
+    if (!isFullyAuthenticated || !user?.email) {
+      setError("Please log in to purchase NFTs");
+      return;
+    }
+
+    if (!selectedTokenId) {
+      setError("Please select an NFT to purchase");
+      return;
+    }
+
+    setError(null);
+    setIsProcessingCardPayment(true);
+
+    try {
+      // At this point, we know user and user.email are not null/undefined
+      const userEmail = user.email as string;
+
+      // Check if user has already purchased
+      const hasPurchased = await hasUserPurchasedNFT(userEmail);
+      if (hasPurchased) {
+        setError("You have already purchased an NFT");
+        setIsProcessingCardPayment(false);
+        return;
+      }
+
+      // TODO: Implement actual card payment processing
+      // For now, just simulate a successful payment
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Get the contract owner's signer to mark the token as pre-purchased
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const contract = await getNftContract(provider);
+      const ownerAddress = await contract.owner();
+
+      // We need the owner's signer to mark the token as pre-purchased
+      // For now, we'll show an error since we don't have the owner's private key
+      setError("Card payments are not yet fully implemented");
+      setIsProcessingCardPayment(false);
+      return;
+
+      // Record the purchase in Supabase - this is now unreachable due to the return above
+      // Will be implemented properly when we have the backend
+      await recordMintedNFT(userEmail, "");
+      await updateNFTPurchaseStatus(userEmail);
+
+      setSuccessMessage(
+        "Successfully purchased NFT! Check your MyNFTs page to claim it."
+      );
+      await fetchAvailable();
+    } catch (error) {
+      console.error("Purchase error:", error);
+      setError("Failed to complete the purchase. Please try again.");
+    } finally {
+      setIsProcessingCardPayment(false);
     }
   };
 
@@ -273,7 +358,7 @@ const CollectionDetails: React.FC = () => {
                 onClick={() => {
                   setSelectedAccount(account);
                   setIsAccountSelectionOpen(false);
-                  setTimeout(() => handleDirectPurchase(), 100);
+                  setTimeout(() => handleCryptoPayment(), 100);
                 }}
                 className={`w-full text-left p-3 rounded-lg flex items-center ${
                   selectedAccount === account
@@ -311,7 +396,7 @@ const CollectionDetails: React.FC = () => {
       <div className="min-h-screen bg-[#0B1120] pt-32 pb-16">
         <div className="container mx-auto px-4 md:px-8 lg:px-20 xl:px-24">
           <Link
-            to="/browse-collections"
+            to="/collections"
             className="inline-flex items-center text-gray-400 hover:text-white mb-8"
           >
             <ArrowLeft size={20} className="mr-2" />
@@ -427,11 +512,15 @@ const CollectionDetails: React.FC = () => {
                   </div>
                 )}
 
-                {!isFullyAuthenticated && (
+                {!user && (
                   <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-800/30 rounded-lg text-yellow-300 text-sm">
-                    {!user
-                      ? "Please login to purchase this item"
-                      : "Please connect your wallet to purchase this item"}
+                    Please login to purchase this item
+                  </div>
+                )}
+
+                {paymentMethod === "crypto" && user && !isWalletConnected && (
+                  <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-800/30 rounded-lg text-yellow-300 text-sm">
+                    Please connect your wallet to purchase with crypto
                   </div>
                 )}
 
@@ -441,32 +530,101 @@ const CollectionDetails: React.FC = () => {
                   </div>
                 )}
 
-                <div className="flex gap-4">
-                  {isInCart ? (
+                {/* Payment Method Selection */}
+                <div className="mb-6">
+                  <div className="flex gap-4 mb-4">
                     <button
-                      onClick={viewCart}
-                      className="flex-1 bg-[#2E3A59] hover:bg-[#384670] text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                      onClick={() => setPaymentMethod("crypto")}
+                      className={`flex-1 py-3 px-6 rounded-lg transition-colors ${
+                        paymentMethod === "crypto"
+                          ? "bg-purple-600 text-white"
+                          : "bg-gray-700 text-gray-300"
+                      }`}
                     >
-                      <ShoppingCart size={18} className="mr-2" />
-                      View Cart
+                      Pay with Crypto
+                    </button>
+                    <button
+                      onClick={() => setPaymentMethod("card")}
+                      className={`flex-1 py-3 px-6 rounded-lg transition-colors ${
+                        paymentMethod === "card"
+                          ? "bg-purple-600 text-white"
+                          : "bg-gray-700 text-gray-300"
+                      }`}
+                    >
+                      Pay with Card
+                    </button>
+                  </div>
+
+                  {paymentMethod === "crypto" ? (
+                    <div className="text-sm text-gray-400">
+                      {!isWalletConnected
+                        ? "You'll need to connect your wallet to pay with ETH."
+                        : "Pay with ETH. NFT will be transferred immediately."}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-400">
+                      Pay with credit/debit card. Connect wallet later to claim
+                      your NFT.
+                    </div>
+                  )}
+                </div>
+
+                {/* NFT Selection */}
+                {available > 0 && (
+                  <div className="mb-4">
+                    <label className="block text-white mb-2">Select NFT:</label>
+                    <select
+                      className="w-full p-2 rounded bg-gray-800 text-white"
+                      value={selectedTokenId || ""}
+                      onChange={(e) =>
+                        setSelectedTokenId(Number(e.target.value))
+                      }
+                    >
+                      <option value="">Select an NFT</option>
+                      {availableTokens.map((tokenId) => (
+                        <option key={tokenId} value={tokenId}>
+                          Turtle Timepiece #{tokenId}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="flex gap-4">
+                  {paymentMethod === "crypto" ? (
+                    <button
+                      onClick={handleCryptoPayment}
+                      disabled={
+                        isPurchasing || !selectedTokenId || available <= 0
+                      }
+                      className={`flex-1 py-3 px-6 rounded-lg transition-colors ${
+                        isPurchasing || !selectedTokenId || available <= 0
+                          ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                          : "bg-purple-600 hover:bg-purple-700 text-white"
+                      }`}
+                    >
+                      {isPurchasing ? "Processing..." : "Buy with Crypto"}
                     </button>
                   ) : (
-                    <>
-                      <button
-                        onClick={handlePurchase}
-                        className="flex-1 bg-[#00BCD4] hover:bg-[#00ACC1] text-white font-medium py-3 px-6 rounded-lg transition-colors"
-                        disabled={available <= 0}
-                      >
-                        Add to Cart
-                      </button>
-                      <button
-                        onClick={handleDirectPurchase}
-                        disabled={isPurchasing || available <= 0}
-                        className="flex-1 bg-[#4A148C] hover:bg-[#6A1B9A] text-white font-medium py-3 px-6 rounded-lg transition-colors"
-                      >
-                        {isPurchasing ? "Processing..." : "Buy Now"}
-                      </button>
-                    </>
+                    <button
+                      onClick={handleCardPayment}
+                      disabled={
+                        isProcessingCardPayment ||
+                        !selectedTokenId ||
+                        available <= 0
+                      }
+                      className={`flex-1 py-3 px-6 rounded-lg transition-colors ${
+                        isProcessingCardPayment ||
+                        !selectedTokenId ||
+                        available <= 0
+                          ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                          : "bg-purple-600 hover:bg-purple-700 text-white"
+                      }`}
+                    >
+                      {isProcessingCardPayment
+                        ? "Processing..."
+                        : "Buy with Card"}
+                    </button>
                   )}
                 </div>
               </div>

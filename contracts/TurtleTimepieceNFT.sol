@@ -27,14 +27,33 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
     
     // Price per NFT in ETH
     uint256 public mintPrice = 0.001 ether;
+
+    // Mapping to track which tokens are available for sale
+    mapping(uint256 => bool) public isTokenForSale;
+
+    // Mapping to track pre-purchased tokens (via Stripe)
+    mapping(uint256 => address) public stripePurchases;
     
     // Events
     event NFTMinted(address owner, uint256 tokenId, string tokenURI);
+    event NFTSold(address from, address to, uint256 tokenId, uint256 price);
+    event TokenPutForSale(uint256 tokenId);
+    event TokenRemovedFromSale(uint256 tokenId);
+    event TokenPrePurchased(uint256 tokenId, address purchaser);
+    event TokenClaimed(uint256 tokenId, address claimer);
     event ContractPaused(address indexed by);
     event ContractUnpaused(address indexed by);
     
     constructor() ERC721("Diamond Access Ticket", "DIAMOND") {
         _baseTokenURI = "";
+        // Pre-mint all NFTs to the contract owner
+        address owner = _msgSender();
+        for (uint256 i = 1; i <= MAX_SUPPLY; i++) {
+            _tokenIds.increment();
+            _mint(owner, i);
+            isTokenForSale[i] = true; // Mark all tokens as available for sale
+            emit NFTMinted(owner, i, tokenURI(i));
+        }
     }
     
     /**
@@ -53,7 +72,7 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
     }
     
     /**
-     * @dev Set the mint price
+     * @dev Set the sale price
      * @param newPrice New price in wei
      */
     function setMintPrice(uint256 newPrice) external onlyOwner {
@@ -77,45 +96,87 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
     }
 
     /**
-     * @dev Mint a new NFT with payment
-     * @param recipient Address to receive the NFT
-     * @return tokenId The newly minted token ID
+     * @dev Put a token up for sale or remove it from sale
+     * @param tokenId The token to modify sale status
+     * @param forSale Whether the token should be for sale
      */
-    function mintWithETH(address recipient) external payable nonReentrant whenNotPaused returns (uint256) {
-        require(_tokenIds.current() < MAX_SUPPLY, "Max supply reached");
+    function setTokenSaleStatus(uint256 tokenId, bool forSale) external {
+        require(_exists(tokenId), "Token does not exist");
+        require(ownerOf(tokenId) == _msgSender(), "Not token owner");
+        isTokenForSale[tokenId] = forSale;
+        if (forSale) {
+            emit TokenPutForSale(tokenId);
+        } else {
+            emit TokenRemovedFromSale(tokenId);
+        }
+    }
+
+    /**
+     * @dev Mark a token as pre-purchased via Stripe
+     * @param tokenId The token that was purchased
+     * @param purchaser The address that will be able to claim the token
+     */
+    function markTokenAsPrePurchased(uint256 tokenId, address purchaser) external onlyOwner {
+        require(_exists(tokenId), "Token does not exist");
+        require(isTokenForSale[tokenId], "Token is not for sale");
+        require(purchaser != address(0), "Invalid purchaser address");
+        require(stripePurchases[tokenId] == address(0), "Token already pre-purchased");
+        
+        isTokenForSale[tokenId] = false;
+        stripePurchases[tokenId] = purchaser;
+        emit TokenPrePurchased(tokenId, purchaser);
+    }
+
+    /**
+     * @dev Claim a pre-purchased token
+     * @param tokenId The token to claim
+     */
+    function claimToken(uint256 tokenId) external nonReentrant whenNotPaused {
+        require(_exists(tokenId), "Token does not exist");
+        require(stripePurchases[tokenId] == msg.sender, "Not authorized to claim");
+        
+        address tokenOwner = ownerOf(tokenId);
+        require(tokenOwner == owner(), "Token not owned by contract owner");
+        
+        _transfer(tokenOwner, msg.sender, tokenId);
+        stripePurchases[tokenId] = address(0);
+        
+        emit TokenClaimed(tokenId, msg.sender);
+    }
+
+    /**
+     * @dev Purchase an NFT that is for sale with ETH
+     * @param tokenId The token ID to purchase
+     */
+    function purchaseNFT(uint256 tokenId) external payable nonReentrant whenNotPaused {
+        require(_exists(tokenId), "Token does not exist");
+        require(isTokenForSale[tokenId], "Token is not for sale");
         require(msg.value >= mintPrice, "Insufficient ETH sent");
+        require(stripePurchases[tokenId] == address(0), "Token is pre-purchased");
+        
+        address seller = ownerOf(tokenId);
+        require(seller != msg.sender, "Cannot buy your own token");
         
         // Calculate excess ETH
         uint256 excess = msg.value - mintPrice;
         
-        _tokenIds.increment();
-        uint256 newTokenId = _tokenIds.current();
+        // Transfer the NFT
+        _transfer(seller, msg.sender, tokenId);
         
-        _mint(recipient, newTokenId);
+        // Mark token as not for sale after purchase
+        isTokenForSale[tokenId] = false;
         
-        // Let the ERC721URIStorage handle the token URI using baseURI
-        // We don't need to explicitly set the token URI here
+        // Transfer payment to the seller
+        (bool success, ) = payable(seller).call{value: mintPrice}("");
+        require(success, "Payment to seller failed");
         
-        emit NFTMinted(recipient, newTokenId, tokenURI(newTokenId));
-        
-        // Refund excess ETH
+        // Refund excess ETH to buyer
         if (excess > 0) {
-            (bool success, ) = payable(msg.sender).call{value: excess}("");
-            require(success, "Refund failed");
+            (bool refundSuccess, ) = payable(msg.sender).call{value: excess}("");
+            require(refundSuccess, "Refund failed");
         }
         
-        return newTokenId;
-    }
-    
-    /**
-     * @dev Withdraw contract funds to owner
-     */
-    function withdraw() external onlyOwner {
-        uint256 balance = address(this).balance;
-        require(balance > 0, "No funds to withdraw");
-        
-        (bool success, ) = payable(owner()).call{value: balance}("");
-        require(success, "Withdrawal failed");
+        emit NFTSold(seller, msg.sender, tokenId, mintPrice);
     }
     
     /**
@@ -126,9 +187,34 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
     }
     
     /**
-     * @dev Returns true if there are still NFTs available to mint
+     * @dev Returns array of token IDs that are available for sale
      */
-    function availableToMint() external view returns (bool) {
-        return _tokenIds.current() < MAX_SUPPLY;
+    function getTokensForSale() external view returns (uint256[] memory) {
+        uint256[] memory tokensForSale = new uint256[](_tokenIds.current());
+        uint256 count = 0;
+        
+        for (uint256 i = 1; i <= _tokenIds.current(); i++) {
+            if (isTokenForSale[i] && stripePurchases[i] == address(0)) {
+                tokensForSale[count] = i;
+                count++;
+            }
+        }
+        
+        // Create a new array with the correct size
+        uint256[] memory result = new uint256[](count);
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = tokensForSale[i];
+        }
+        
+        return result;
+    }
+
+    /**
+     * @dev Check if a token is pre-purchased and by whom
+     * @param tokenId The token ID to check
+     * @return The address that pre-purchased the token, or zero address if not pre-purchased
+     */
+    function getPrePurchaser(uint256 tokenId) external view returns (address) {
+        return stripePurchases[tokenId];
     }
 } 

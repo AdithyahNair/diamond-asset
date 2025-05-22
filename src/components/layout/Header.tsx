@@ -52,47 +52,40 @@ const Header = () => {
     }
   }, [isWalletConnected]);
 
-  const handleAuthClick = () => {
-    setIsAuthModalOpen(true);
-  };
-
   return (
     <>
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-7xl">
-        <nav className="bg-[#0B1F3A]/95 backdrop-blur-sm rounded-full border border-white/10 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-8">
-              <Link
-                to="/"
-                className="h-[36px] transition-transform hover:scale-105"
-              >
+      <header className="fixed top-0 left-0 right-0 z-40 bg-[#0B1120]/80 backdrop-blur-xl border-b border-white/5">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-8">
+              <Link to="/" className="flex items-center">
                 <img
                   src="/images/aquaduct.png"
-                  alt="Aquaduct"
-                  className="h-full w-auto brightness-0 invert"
+                  alt="Logo"
+                  className="h-8 brightness-0 invert"
                 />
               </Link>
-              <Link
-                to="/browse-collections"
-                className="px-4 py-2 rounded-full text-gray-200 hover:text-white hover:bg-white/5 font-medium transition-all duration-300 relative group"
-              >
-                Collections
-                <span className="absolute bottom-1 left-4 right-4 h-0.5 bg-[#1E9AD3] transform scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
-              </Link>
-              <Link
-                to="/my-nfts"
-                className="px-4 py-2 rounded-full text-gray-200 hover:text-white hover:bg-white/5 font-medium transition-all duration-300 relative group"
-              >
-                My NFTs
-                <span className="absolute bottom-1 left-4 right-4 h-0.5 bg-[#1E9AD3] transform scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
-              </Link>
+
+              <nav className="hidden md:flex items-center gap-6">
+                <Link
+                  to="/collections"
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
+                  Collections
+                </Link>
+                <Link
+                  to="/my-nfts"
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
+                  My NFTs
+                </Link>
+              </nav>
             </div>
 
-            {/* Desktop Actions */}
-            <div className="flex items-center space-x-4">
-              {isFullyAuthenticated ? (
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2 text-gray-200 px-4 py-2 rounded-full bg-white/5">
+            <div className="flex items-center gap-4">
+              {user ? (
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 text-gray-200 px-4 py-2 rounded-full bg-white/5">
                     <User size={16} />
                     <span className="text-sm">
                       {user?.email?.split("@")[0]}
@@ -114,42 +107,32 @@ const Header = () => {
                 </div>
               ) : (
                 <button
-                  onClick={handleAuthClick}
+                  onClick={() => setIsAuthModalOpen(true)}
                   className="px-6 py-2 rounded-full text-gray-200 hover:text-white border border-[#1E3A5F] hover:border-[#1E9AD3] hover:bg-[#1E9AD3]/10 font-medium transition-all duration-300"
                 >
-                  {user ? "Connect Wallet" : "Login"}
+                  Login
                 </button>
               )}
 
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="relative p-2 rounded-full text-gray-200 hover:text-[#1E9AD3] hover:bg-[#1E9AD3]/10 transition-all duration-300"
+                className="relative p-2 rounded-full text-gray-200 hover:text-white hover:bg-white/10 transition-all duration-300"
               >
-                <ShoppingCart size={24} />
+                <ShoppingCart size={20} />
                 {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#1E9AD3] text-white w-5 h-5 rounded-full flex items-center justify-center text-xs animate-pulse">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#1E9AD3] text-white text-xs flex items-center justify-center">
                     {totalItems}
                   </span>
                 )}
               </button>
             </div>
           </div>
-        </nav>
-      </div>
+        </div>
+      </header>
 
-      {/* Modals */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-      />
-
-      <CartSidebar
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        openAuthModal={() => {
-          setIsCartOpen(false);
-          setIsAuthModalOpen(true);
-        }}
       />
     </>
   );

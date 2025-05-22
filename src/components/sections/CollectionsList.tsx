@@ -17,7 +17,7 @@ const CollectionsList = () => {
 
         <div className="max-w-5xl mx-auto">
           <Link
-            to="/collections"
+            to="/collection/turtle-timepiece"
             className="block bg-[#13111C]/60 rounded-2xl p-8 hover:bg-[#13111C] transition-all duration-300 border border-white/10 hover:border-[#1E9AD3]/50"
           >
             <div className="flex flex-col md:flex-row items-center gap-8">

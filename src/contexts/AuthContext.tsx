@@ -20,6 +20,7 @@ interface AuthContextType {
   signup: (email: string, password: string) => Promise<{ error: any }>;
   logout: () => Promise<void>;
   connectWallet: () => void;
+  shouldShowWalletPrompt: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,12 +40,14 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasAttemptedAutoConnect, setHasAttemptedAutoConnect] = useState(false);
 
   const { address } = useAccount();
   const { openConnectModal } = useConnectModal();
 
   const isWalletConnected = !!address;
   const isFullyAuthenticated = !!user && isWalletConnected;
+  const shouldShowWalletPrompt = !!user && !isWalletConnected;
 
   useEffect(() => {
     const loadUser = async () => {
@@ -66,6 +69,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { data, error } = await signIn(email, password);
       if (data.user) {
         setUser(data.user);
+        setHasAttemptedAutoConnect(false);
       }
       return { error };
     } catch (error) {
@@ -78,6 +82,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { data, error } = await signUp(email, password);
       if (data.user) {
         setUser(data.user);
+        setHasAttemptedAutoConnect(false);
       }
       return { error };
     } catch (error) {
@@ -88,6 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async () => {
     await signOut();
     setUser(null);
+    setHasAttemptedAutoConnect(false);
   };
 
   const connectWallet = () => {
@@ -98,6 +104,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (openConnectModal) {
       openConnectModal();
+      setHasAttemptedAutoConnect(true);
     }
   };
 
@@ -107,6 +114,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     walletAddress: address,
     isWalletConnected,
     isFullyAuthenticated,
+    shouldShowWalletPrompt,
     login,
     signup,
     logout,

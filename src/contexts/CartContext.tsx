@@ -7,24 +7,21 @@ import React, {
 } from "react";
 import { useAuth } from "./AuthContext";
 
-export interface CartItem {
+interface CartItem {
   id: string;
   name: string;
   price: number;
   quantity: number;
-  image?: string;
+  image: string;
 }
 
 interface CartContextType {
-  items: CartItem[];
+  cartItems: CartItem[];
+  isCartOpen: boolean;
+  setIsCartOpen: (isOpen: boolean) => void;
   addToCart: (item: CartItem) => void;
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
-  updateQuantity: (itemId: string, quantity: number) => void;
-  totalItems: number;
-  totalPrice: number;
-  isCartOpen: boolean;
-  setIsCartOpen: (isOpen: boolean) => void;
   hasItemInCart: (itemId: string) => boolean;
 }
 
@@ -46,7 +43,7 @@ interface CartProviderProps {
 }
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { isFullyAuthenticated, user } = useAuth();
 
@@ -68,9 +65,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
           // Only keep one item if multiple items exist
           if (fixedCart.length > 1) {
-            setItems([fixedCart[0]]);
+            setCartItems([fixedCart[0]]);
           } else {
-            setItems(fixedCart);
+            setCartItems(fixedCart);
           }
         } catch (e) {
           console.error("Failed to parse cart data:", e);
@@ -83,79 +80,61 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    if (user && items.length > 0) {
+    if (user && cartItems.length > 0) {
       localStorage.setItem(
         `${CART_STORAGE_KEY}_${user.email}`,
-        JSON.stringify(items)
+        JSON.stringify(cartItems)
       );
     } else if (user) {
       // Clear the storage if cart is empty
       localStorage.removeItem(`${CART_STORAGE_KEY}_${user.email}`);
     }
-  }, [items, user]);
+  }, [cartItems, user]);
 
   // If user logs out, clear the cart
   useEffect(() => {
     if (!isFullyAuthenticated) {
-      setItems([]);
+      setCartItems([]);
     }
   }, [isFullyAuthenticated]);
 
   const addToCart = (item: CartItem) => {
-    // Always force quantity to be 1
-    const newItem = { ...item, quantity: 1 };
-
-    setItems((prevItems) => {
-      // If cart already has an item, replace it with the new one
-      if (prevItems.length > 0) {
-        return [newItem];
+    setCartItems((prevItems) => {
+      // Check if item already exists
+      const existingItem = prevItems.find((i) => i.id === item.id);
+      if (existingItem) {
+        // Update quantity if item exists
+        return prevItems.map((i) =>
+          i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
+        );
       }
-
-      // Otherwise add the new item
-      return [newItem];
+      // Add new item if it doesn't exist
+      return [...prevItems, item];
     });
   };
 
   const removeFromCart = (itemId: string) => {
-    setItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
-  };
-
-  const updateQuantity = (itemId: string, quantity: number) => {
-    // Always force quantity to be 1 regardless of what's passed
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === itemId ? { ...item, quantity: 1 } : item
-      )
-    );
+    setCartItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
   };
 
   const clearCart = () => {
-    setItems([]);
+    setCartItems([]);
     if (user) {
       localStorage.removeItem(`${CART_STORAGE_KEY}_${user.email}`);
     }
   };
 
   const hasItemInCart = (itemId: string) => {
-    return items.some((item) => item.id === itemId);
+    return cartItems.some((item) => item.id === itemId);
   };
 
-  // Always count each item as quantity 1 regardless of the quantity field
-  const totalItems = items.length;
-
-  // Calculate price based on each item having quantity 1
-  const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
-
   const value = {
-    items,
+    cartItems,
+    isCartOpen,
+    setIsCartOpen,
     addToCart,
     removeFromCart,
     clearCart,
-    updateQuantity,
-    totalItems,
-    totalPrice,
-    isCartOpen,
-    setIsCartOpen,
     hasItemInCart,
   };
 
