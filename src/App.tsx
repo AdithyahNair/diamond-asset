@@ -7,6 +7,7 @@ import CollectionDetails from "./components/sections/CollectionDetails";
 import CollectionsList from "./components/sections/CollectionsList";
 import MyNFTs from "./components/sections/MyNFTs";
 import CartSidebar from "./components/cart/CartSidebar";
+import CheckoutSuccess from "./components/sections/CheckoutSuccess";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CartProvider } from "./contexts/CartContext";
 
@@ -29,6 +30,7 @@ function App() {
               <Route path="/collections" element={<CollectionsList />} />
               <Route path="/collection/:id" element={<CollectionDetails />} />
               <Route path="/my-nfts" element={<MyNFTs />} />
+              <Route path="/checkout/success" element={<CheckoutSuccess />} />
             </Routes>
             <Footer />
             <CartSidebar />

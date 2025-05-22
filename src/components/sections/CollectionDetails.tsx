@@ -270,7 +270,7 @@ const CollectionDetails: React.FC = () => {
   };
 
   const handleCardPayment = async () => {
-    if (!isFullyAuthenticated || !user?.email) {
+    if (!user?.email) {
       setError("Please log in to purchase NFTs");
       return;
     }
@@ -295,34 +295,12 @@ const CollectionDetails: React.FC = () => {
         return;
       }
 
-      // TODO: Implement actual card payment processing
-      // For now, just simulate a successful payment
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Get the contract owner's signer to mark the token as pre-purchased
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const contract = await getNftContract(provider);
-      const ownerAddress = await contract.owner();
-
-      // We need the owner's signer to mark the token as pre-purchased
-      // For now, we'll show an error since we don't have the owner's private key
-      setError("Card payments are not yet fully implemented");
-      setIsProcessingCardPayment(false);
-      return;
-
-      // Record the purchase in Supabase - this is now unreachable due to the return above
-      // Will be implemented properly when we have the backend
-      await recordMintedNFT(userEmail, "");
-      await updateNFTPurchaseStatus(userEmail);
-
-      setSuccessMessage(
-        "Successfully purchased NFT! Check your MyNFTs page to claim it."
-      );
-      await fetchAvailable();
+      // Use the pre-built Stripe checkout link
+      window.location.href =
+        "https://buy.stripe.com/test_cNi5kDdoA04lcHoehT1gs00";
     } catch (error) {
       console.error("Purchase error:", error);
-      setError("Failed to complete the purchase. Please try again.");
-    } finally {
+      setError("Failed to initiate card payment. Please try again.");
       setIsProcessingCardPayment(false);
     }
   };
@@ -611,12 +589,14 @@ const CollectionDetails: React.FC = () => {
                       disabled={
                         isProcessingCardPayment ||
                         !selectedTokenId ||
-                        available <= 0
+                        available <= 0 ||
+                        !user
                       }
                       className={`flex-1 py-3 px-6 rounded-lg transition-colors ${
                         isProcessingCardPayment ||
                         !selectedTokenId ||
-                        available <= 0
+                        available <= 0 ||
+                        !user
                           ? "bg-gray-700 text-gray-400 cursor-not-allowed"
                           : "bg-purple-600 hover:bg-purple-700 text-white"
                       }`}

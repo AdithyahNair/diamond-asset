@@ -27,7 +27,7 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
     
     // Price per NFT in ETH
     uint256 public mintPrice = 0.001 ether;
-
+    
     // Mapping to track which tokens are available for sale
     mapping(uint256 => bool) public isTokenForSale;
 
