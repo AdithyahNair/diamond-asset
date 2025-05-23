@@ -80,7 +80,7 @@ const MyNFTs = () => {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 pt-32 pb-8">
         <div className="text-center text-gray-300">
           Please log in to view your NFTs
         </div>
@@ -89,7 +89,7 @@ const MyNFTs = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 pt-32 pb-8">
       <h1 className="text-3xl font-bold mb-8 text-white">My NFTs</h1>
 
       {error && (
@@ -113,11 +113,11 @@ const MyNFTs = () => {
           {purchasedNFTs.map((tokenId) => (
             <div
               key={tokenId}
-              className="bg-gray-800 rounded-lg p-6 border border-gray-700"
+              className="bg-[#13111C]/60 rounded-xl p-6 border border-gray-700/50 backdrop-blur-sm"
             >
-              <div className="aspect-square bg-gray-700 rounded-lg mb-4">
+              <div className="aspect-square bg-[#1A191F] rounded-lg mb-4 overflow-hidden">
                 {/* NFT Image placeholder */}
-                <div className="w-full h-full flex items-center justify-center text-gray-500">
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg font-medium">
                   NFT #{tokenId}
                 </div>
               </div>
@@ -127,15 +127,28 @@ const MyNFTs = () => {
               </h3>
 
               {claimedNFTs.includes(tokenId) ? (
-                <div className="text-green-400 text-sm mb-4">Claimed ✓</div>
+                <div className="text-green-400 text-sm mb-4 flex items-center">
+                  <span className="mr-1">Claimed</span>
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
               ) : (
                 <button
                   onClick={() => handleClaim(tokenId)}
                   disabled={isClaiming[tokenId]}
-                  className={`w-full py-2 px-4 rounded-lg transition-colors ${
+                  className={`w-full py-3 px-4 rounded-lg transition-all duration-200 ${
                     isClaiming[tokenId]
-                      ? "bg-purple-900 text-purple-300 cursor-not-allowed"
-                      : "bg-purple-600 hover:bg-purple-700 text-white"
+                      ? "bg-purple-900/50 text-purple-300 cursor-not-allowed"
+                      : "bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-purple-500/20"
                   }`}
                 >
                   {isClaiming[tokenId] ? "Claiming..." : "Claim NFT"}

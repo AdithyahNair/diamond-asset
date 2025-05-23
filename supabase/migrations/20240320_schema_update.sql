@@ -1,4 +1,11 @@
--- Drop existing tables
+-- Drop existing policies
+DROP POLICY IF EXISTS "Users can view their own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users can insert their own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users can view their own minted NFTs" ON minted_nfts;
+DROP POLICY IF EXISTS "Users can insert their own minted NFTs" ON minted_nfts;
+
+-- Drop existing tables that we don't need
 DROP TABLE IF EXISTS minted_emails;
 DROP TABLE IF EXISTS user_carts;
 
@@ -12,8 +19,14 @@ CREATE TABLE user_profiles (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create minted_nfts table
-CREATE TABLE minted_nfts (
+-- Alter existing user_profiles table
+ALTER TABLE IF EXISTS user_profiles 
+    ALTER COLUMN nft_purchases SET DEFAULT '{}',
+    ALTER COLUMN created_at SET DEFAULT NOW(),
+    ALTER COLUMN updated_at SET DEFAULT NOW();
+
+-- Create minted_nfts table if it doesn't exist
+CREATE TABLE IF NOT EXISTS minted_nfts (
     id BIGSERIAL PRIMARY KEY,
     email TEXT NOT NULL,
     wallet_address TEXT NOT NULL,
@@ -22,7 +35,12 @@ CREATE TABLE minted_nfts (
     UNIQUE(email, token_id)
 );
 
--- Add indexes for better query performance
+-- Add indexes for better query performance (IF NOT EXISTS is not supported for indexes)
+DROP INDEX IF EXISTS idx_user_profiles_user_id;
+DROP INDEX IF EXISTS idx_user_profiles_email;
+DROP INDEX IF EXISTS idx_minted_nfts_email;
+DROP INDEX IF EXISTS idx_minted_nfts_token_id;
+
 CREATE INDEX idx_user_profiles_user_id ON user_profiles(user_id);
 CREATE INDEX idx_user_profiles_email ON user_profiles(email);
 CREATE INDEX idx_minted_nfts_email ON minted_nfts(email);
@@ -40,6 +58,10 @@ CREATE POLICY "Users can view their own profile"
 CREATE POLICY "Users can update their own profile"
     ON user_profiles FOR UPDATE
     USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own profile"
+    ON user_profiles FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
 
 -- Create RLS policies for minted_nfts
 CREATE POLICY "Users can view their own minted NFTs"
