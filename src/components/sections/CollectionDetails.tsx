@@ -5,13 +5,11 @@ import {
   Heart,
   Share2,
   RefreshCw,
-  ShoppingCart,
   AlertCircle,
   Check,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCart } from "../../contexts/CartContext";
 import AuthModal from "../auth/AuthModal";
 import {
   getNftContract,
@@ -59,9 +57,6 @@ const CollectionDetails: React.FC = () => {
     walletAddress,
     connectWallet,
   } = useAuth();
-  const { addToCart, setIsCartOpen, hasItemInCart } = useCart();
-
-  const isInCart = hasItemInCart(NFT_ITEM_ID);
 
   const fetchAvailable = async () => {
     try {
@@ -146,54 +141,6 @@ const CollectionDetails: React.FC = () => {
     }
   }, [isWalletConnected]);
 
-  const handlePurchase = () => {
-    setError(null);
-    setSuccessMessage(null);
-
-    if (!isFullyAuthenticated) {
-      setIsAuthModalOpen(true);
-      return;
-    }
-
-    if (!isWalletConnected) {
-      setError("Please connect your wallet to purchase NFTs");
-      setTimeout(() => setError(null), 3000);
-      return;
-    }
-
-    if (isInCart) {
-      setError("This item is already in your cart");
-      setTimeout(() => setError(null), 3000);
-      return;
-    }
-
-    if (available <= 0) {
-      setError("No NFTs available for purchase");
-      setTimeout(() => setError(null), 3000);
-      return;
-    }
-
-    try {
-      addToCart({
-        id: NFT_ITEM_ID,
-        name: "Turtle Timepiece Genesis",
-        price: ETH_PRICE_USD,
-        quantity: 1, // Always set quantity to 1
-        image: "/videos/nft-video.mp4",
-      });
-
-      setSuccessMessage("Added to cart successfully!");
-      setTimeout(() => {
-        setSuccessMessage(null);
-        setIsCartOpen(true);
-      }, 1500);
-    } catch (err) {
-      console.error("Error adding to cart:", err);
-      setError("Failed to add item to cart");
-      setTimeout(() => setError(null), 3000);
-    }
-  };
-
   const canMint = async (email: string | undefined | null) => {
     if (!email) return false;
 
@@ -232,14 +179,6 @@ const CollectionDetails: React.FC = () => {
     setTxHash(null);
 
     try {
-      // Check if user has already purchased
-      const hasPurchased = await hasUserPurchasedNFT(user.email);
-      if (hasPurchased) {
-        setError("You have already purchased an NFT");
-        setIsPurchasing(false);
-        return;
-      }
-
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
@@ -256,11 +195,15 @@ const CollectionDetails: React.FC = () => {
       setTxHash(result.transaction?.hash || null);
 
       // Record the purchase in Supabase
-      await recordMintedNFT(user.email, walletAddress);
-      await updateNFTPurchaseStatus(user.email);
+      await recordMintedNFT(user.email, walletAddress, selectedTokenId);
 
-      setSuccessMessage("Successfully purchased NFT!");
+      setSuccessMessage(
+        "Successfully purchased NFT! You can purchase another one if you'd like."
+      );
       await fetchAvailable(); // Refresh available tokens
+
+      // Reset selected token after successful purchase
+      setSelectedTokenId(null);
     } catch (error) {
       console.error("Purchase error:", error);
       setError("Failed to complete the purchase. Please try again.");
@@ -284,18 +227,8 @@ const CollectionDetails: React.FC = () => {
     setIsProcessingCardPayment(true);
 
     try {
-      // At this point, we know user and user.email are not null/undefined
-      const userEmail = user.email as string;
-
-      // Check if user has already purchased
-      const hasPurchased = await hasUserPurchasedNFT(userEmail);
-      if (hasPurchased) {
-        setError("You have already purchased an NFT");
-        setIsProcessingCardPayment(false);
-        return;
-      }
-
-      // Use the pre-built Stripe checkout link
+      // Use the pre-built Stripe checkout link with success redirect to /my-nfts
+      const successUrl = `${window.location.origin}/my-nfts?token_id=${selectedTokenId}`;
       window.location.href =
         "https://buy.stripe.com/test_cNi5kDdoA04lcHoehT1gs00";
     } catch (error) {
@@ -312,10 +245,6 @@ const CollectionDetails: React.FC = () => {
     }
 
     alert("Making an offer for Turtle Timepiece Genesis");
-  };
-
-  const viewCart = () => {
-    setIsCartOpen(true);
   };
 
   const renderAccountSelection = () => {
@@ -460,8 +389,8 @@ const CollectionDetails: React.FC = () => {
                 <div className="mb-2 text-sm text-gray-400">
                   <div className="p-3 bg-blue-900/20 border border-blue-800/30 rounded-lg text-blue-300">
                     <p>
-                      Limited to 1 NFT per purchase. Total price:{" "}
-                      {ETH_PRICE_USD} ETH (${USD_PRICE})
+                      You can purchase multiple NFTs, one at a time. Each NFT
+                      costs {ETH_PRICE_USD} ETH (${USD_PRICE})
                     </p>
                   </div>
                 </div>

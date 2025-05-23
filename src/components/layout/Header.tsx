@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingCart, LogOut, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCart } from "../../contexts/CartContext";
 import AuthModal from "../auth/AuthModal";
-import CartSidebar from "../cart/CartSidebar";
 import WalletStatus from "../wallet/WalletStatus";
 
 const Header = () => {
@@ -16,7 +14,6 @@ const Header = () => {
     walletAddress,
     isWalletConnected,
   } = useAuth();
-  const { totalItems, isCartOpen, setIsCartOpen } = useCart();
   const [networkName, setNetworkName] = useState<string>("Unknown");
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
 
@@ -113,18 +110,6 @@ const Header = () => {
                   Login
                 </button>
               )}
-
-              <button
-                onClick={() => setIsCartOpen(true)}
-                className="relative p-2 rounded-full text-gray-200 hover:text-white hover:bg-white/10 transition-all duration-300"
-              >
-                <ShoppingCart size={20} />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#1E9AD3] text-white text-xs flex items-center justify-center">
-                    {totalItems}
-                  </span>
-                )}
-              </button>
             </div>
           </div>
         </div>

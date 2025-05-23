@@ -431,3 +431,5 @@ export const markTokenAsPrePurchased = async (
     };
   }
 };
+
+export { claimNft as claimToken };

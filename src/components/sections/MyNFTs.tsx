@@ -1,226 +1,150 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { getNftsOwnedBy } from "../../lib/nftContract";
+import { getUserPurchasedNFTs } from "../../lib/supabase";
+import { getNftContract, claimToken } from "../../lib/nftContract";
 import { ethers } from "ethers";
+import { useSearchParams } from "react-router-dom";
 
-interface NFTMetadata {
-  name: string;
-  description: string;
-  image: string;
-  attributes?: Array<{
-    trait_type: string;
-    value: string | number;
-  }>;
-}
-
-interface ImageUrls {
-  primary: string;
-  fallbacks: string[];
-}
-
-interface NFT {
-  id: number;
-  tokenURI: string;
-  metadata: NFTMetadata | null;
-  imageUrl: ImageUrls | null;
-  forSale: boolean;
-  prePurchaser: string;
-  canClaim?: boolean;
-}
-
-const MyNFTs: React.FC = () => {
-  const [nfts, setNfts] = useState<NFT[]>([]);
-  const [loading, setLoading] = useState(true);
+const MyNFTs = () => {
+  const { user, isWalletConnected, connectWallet } = useAuth();
+  const [purchasedNFTs, setPurchasedNFTs] = useState<number[]>([]);
+  const [claimedNFTs, setClaimedNFTs] = useState<number[]>([]);
+  const [isClaiming, setIsClaiming] = useState<{ [key: number]: boolean }>({});
   const [error, setError] = useState<string | null>(null);
-  const { walletAddress, isWalletConnected } = useAuth();
+  const [success, setSuccess] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const fetchNFTs = async () => {
-      if (!isWalletConnected || !walletAddress) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const ownedNFTs = await getNftsOwnedBy(provider, walletAddress);
-        console.log("[DEBUG] Owned NFTs:", ownedNFTs);
-
-        // Map through NFTs and log each one's metadata
-        ownedNFTs.forEach((nft: any) => {
-          console.log(`[DEBUG] NFT #${nft.id} metadata:`, nft.metadata);
-          console.log(`[DEBUG] NFT #${nft.id} image URL:`, nft.imageUrl);
-        });
-
-        setNfts(ownedNFTs as NFT[]);
-      } catch (err) {
-        console.error("[DEBUG] Error fetching NFTs:", err);
-        setError("Failed to load your NFTs. Please try again.");
-      } finally {
-        setLoading(false);
+    const checkPurchaseStatus = async () => {
+      if (user?.email) {
+        const purchased = await getUserPurchasedNFTs(user.email);
+        setPurchasedNFTs(purchased);
       }
     };
+    checkPurchaseStatus();
+  }, [user]);
 
-    fetchNFTs();
-  }, [walletAddress, isWalletConnected]);
+  useEffect(() => {
+    const checkClaimedStatus = async () => {
+      if (!isWalletConnected || !purchasedNFTs.length) return;
 
-  // Function to get IPFS gateway URL
-  const getIPFSGatewayUrl = (ipfsUrl: string | undefined) => {
-    if (!ipfsUrl) return undefined;
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const contract = await getNftContract(provider);
+        const claimed: number[] = [];
 
-    // If it's already a gateway URL, return as is
-    if (ipfsUrl.startsWith("http")) {
-      return ipfsUrl;
-    }
+        for (const tokenId of purchasedNFTs) {
+          const prePurchaser = await contract.getPrePurchaser(tokenId);
+          if (prePurchaser === ethers.ZeroAddress) {
+            claimed.push(tokenId);
+          }
+        }
 
-    // Convert IPFS URL to gateway URL
-    const ipfsHash = ipfsUrl.replace("ipfs://", "");
-    const gatewayUrl = `https://ipfs.io/ipfs/${ipfsHash}`;
-    console.log("Converting IPFS URL:", ipfsUrl, "to gateway URL:", gatewayUrl);
-    return gatewayUrl;
-  };
-
-  // Function to handle image errors and try fallback URLs
-  const handleImageError = (
-    e: React.SyntheticEvent<HTMLImageElement>,
-    nft: NFT,
-    fallbackIndex: number = 0
-  ) => {
-    const target = e.target as HTMLImageElement;
-    console.log(
-      `[DEBUG] Image load error for NFT #${nft.id}, trying fallback ${fallbackIndex}`
-    );
-
-    // Try gateway URLs in order
-    const gatewayUrls = [
-      "https://ipfs.io/ipfs/",
-      "https://cloudflare-ipfs.com/ipfs/",
-      "https://dweb.link/ipfs/",
-      "https://gateway.pinata.cloud/ipfs/",
-    ];
-
-    if (nft.metadata?.image) {
-      const ipfsHash = nft.metadata.image.replace("ipfs://", "");
-      if (fallbackIndex < gatewayUrls.length) {
-        const fallbackUrl = `${gatewayUrls[fallbackIndex]}${ipfsHash}`;
-        console.log(`[DEBUG] Using fallback URL:`, fallbackUrl);
-        target.src = fallbackUrl;
-        // Update onError to try next fallback
-        target.onerror = (e) =>
-          handleImageError(e as any, nft, fallbackIndex + 1);
-      } else {
-        console.log(`[DEBUG] No more fallbacks available, using placeholder`);
-        target.src = "/images/placeholder.png";
-        target.onerror = null; // Remove error handler to prevent loops
+        setClaimedNFTs(claimed);
+      } catch (err) {
+        console.error("Error checking claimed status:", err);
       }
-    } else {
-      target.src = "/images/placeholder.png";
-      target.onerror = null;
+    };
+    checkClaimedStatus();
+  }, [isWalletConnected, purchasedNFTs]);
+
+  const handleClaim = async (tokenId: number) => {
+    if (!isWalletConnected) {
+      connectWallet();
+      return;
+    }
+
+    setIsClaiming((prev) => ({ ...prev, [tokenId]: true }));
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const result = await claimToken(signer, tokenId);
+
+      if (result.success) {
+        setSuccess(`Successfully claimed NFT #${tokenId}!`);
+        setClaimedNFTs((prev) => [...prev, tokenId]);
+      } else {
+        setError(result.error || "Failed to claim NFT");
+      }
+    } catch (err) {
+      console.error("Error claiming NFT:", err);
+      setError("Failed to claim NFT. Please try again.");
+    } finally {
+      setIsClaiming((prev) => ({ ...prev, [tokenId]: false }));
     }
   };
 
-  if (!isWalletConnected) {
+  if (!user) {
     return (
-      <div className="min-h-screen bg-[#0B1120] pt-32 pb-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center text-white">
-            <h1 className="text-2xl font-bold mb-4">My NFTs</h1>
-            <p>Please connect your wallet to view your NFTs.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0B1120] pt-32 pb-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center text-white">
-            <h1 className="text-2xl font-bold mb-4">My NFTs</h1>
-            <p>Loading your NFTs...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[#0B1120] pt-32 pb-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center text-white">
-            <h1 className="text-2xl font-bold mb-4">My NFTs</h1>
-            <p className="text-red-500">{error}</p>
-          </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center text-gray-300">
+          Please log in to view your NFTs
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0B1120] pt-32 pb-16">
-      <div className="container mx-auto px-4">
-        <h1 className="text-2xl font-bold text-white mb-8">My NFTs</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8 text-white">My NFTs</h1>
 
-        {nfts.length === 0 ? (
-          <div className="text-center text-white">
-            <p>You don't own any NFTs yet.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {nfts.map((nft) => (
-              <div
-                key={nft.id}
-                className="bg-[#13111C] rounded-xl overflow-hidden"
-              >
-                <div className="aspect-square relative">
-                  {nft.metadata?.image ? (
-                    <img
-                      src={getIPFSGatewayUrl(nft.metadata.image)}
-                      alt={nft.metadata.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => handleImageError(e, nft)}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-800">
-                      <span className="text-gray-400">No image available</span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    {nft.metadata?.name || `NFT #${nft.id}`}
-                  </h3>
-                  {nft.metadata && (
-                    <div className="text-gray-400">
-                      <p className="mb-2">{nft.metadata.description}</p>
-                      {nft.metadata.attributes?.map((attr, index) => (
-                        <div key={index} className="text-sm mb-1">
-                          <span className="text-gray-500">
-                            {attr.trait_type}:
-                          </span>{" "}
-                          {attr.value}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {nft.canClaim && (
-                    <div className="mt-4">
-                      <button className="w-full py-2 px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                        Claim NFT
-                      </button>
-                    </div>
-                  )}
+      {error && (
+        <div className="mb-4 p-3 bg-red-900/20 border border-red-800/30 rounded-lg text-red-300 text-sm">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 p-3 bg-green-900/20 border border-green-800/30 rounded-lg text-green-300 text-sm">
+          {success}
+        </div>
+      )}
+
+      {purchasedNFTs.length === 0 ? (
+        <div className="text-center text-gray-300">
+          You haven't purchased any NFTs yet
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {purchasedNFTs.map((tokenId) => (
+            <div
+              key={tokenId}
+              className="bg-gray-800 rounded-lg p-6 border border-gray-700"
+            >
+              <div className="aspect-square bg-gray-700 rounded-lg mb-4">
+                {/* NFT Image placeholder */}
+                <div className="w-full h-full flex items-center justify-center text-gray-500">
+                  NFT #{tokenId}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+
+              <h3 className="text-xl font-semibold mb-2 text-white">
+                Turtle Timepiece #{tokenId}
+              </h3>
+
+              {claimedNFTs.includes(tokenId) ? (
+                <div className="text-green-400 text-sm mb-4">Claimed ✓</div>
+              ) : (
+                <button
+                  onClick={() => handleClaim(tokenId)}
+                  disabled={isClaiming[tokenId]}
+                  className={`w-full py-2 px-4 rounded-lg transition-colors ${
+                    isClaiming[tokenId]
+                      ? "bg-purple-900 text-purple-300 cursor-not-allowed"
+                      : "bg-purple-600 hover:bg-purple-700 text-white"
+                  }`}
+                >
+                  {isClaiming[tokenId] ? "Claiming..." : "Claim NFT"}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

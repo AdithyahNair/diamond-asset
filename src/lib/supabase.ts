@@ -2,17 +2,17 @@ import { createClient } from "@supabase/supabase-js";
 
 // Get Supabase URL and anon key from environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Check if environment variables are set
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!supabaseUrl || !supabaseKey) {
   console.error(
     "Supabase URL or Anon Key missing. Make sure to set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file."
   );
 }
 
 // Create Supabase client with session handling options
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
@@ -38,7 +38,7 @@ const initializeUserProfile = async (userId: string, email: string) => {
       {
         user_id: userId,
         email: email,
-        purchasedNFT: false,
+        nft_purchases: [], // Array to store multiple NFT purchases
       },
     ]);
 
@@ -89,51 +89,54 @@ export const getSession = async () => {
 };
 
 // Record a minted NFT
-export const recordMintedNFT = async (email: string, walletAddress: string) => {
+export const recordMintedNFT = async (
+  email: string,
+  walletAddress: string,
+  tokenId: number
+) => {
   try {
-    console.log("Attempting to record mint with:", { email, walletAddress });
+    console.log("Attempting to record mint with:", {
+      email,
+      walletAddress,
+      tokenId,
+    });
 
     const { data, error } = await supabase
-      .from("minted_emails")
+      .from("minted_nfts")
       .insert([
         {
           email,
           wallet_address: walletAddress,
+          token_id: tokenId,
           minted_at: new Date().toISOString(),
         },
       ])
       .select();
 
     if (error) {
-      console.error("Supabase error recording mint:", {
-        error,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-        message: error.message,
-      });
+      console.error("Supabase error recording mint:", error);
       throw error;
     }
+
+    // Also update the user's profile with the new NFT purchase
+    await updateNFTPurchaseStatus(email, tokenId);
 
     console.log("Successfully recorded mint:", data);
     return { data, error: null };
   } catch (error) {
-    console.error("Error in recordMintedNFT:", {
-      error,
-      errorMessage: error instanceof Error ? error.message : "Unknown error",
-      errorStack: error instanceof Error ? error.stack : undefined,
-    });
+    console.error("Error in recordMintedNFT:", error);
     return { data: null, error };
   }
 };
 
-// Check if an email has already minted
-export const hasEmailMinted = async (email: string) => {
+// Check if an email has already minted a specific token
+export const hasEmailMintedToken = async (email: string, tokenId: number) => {
   try {
     const { data, error } = await supabase
-      .from("minted_emails")
-      .select("email")
+      .from("minted_nfts")
+      .select("token_id")
       .eq("email", email)
+      .eq("token_id", tokenId)
       .single();
 
     if (error) {
@@ -149,14 +152,31 @@ export const hasEmailMinted = async (email: string) => {
 };
 
 // Update user's NFT purchase status
-export const updateNFTPurchaseStatus = async (email: string) => {
+export const updateNFTPurchaseStatus = async (
+  email: string,
+  tokenId: number
+) => {
   try {
-    const { error } = await supabase
+    // First get the current purchases array
+    const { data: profile, error: fetchError } = await supabase
       .from("user_profiles")
-      .update({ purchasedNFT: true })
-      .eq("email", email);
+      .select("nft_purchases")
+      .eq("email", email)
+      .single();
 
-    if (error) throw error;
+    if (fetchError) throw fetchError;
+
+    // Add the new token ID to the purchases array
+    const currentPurchases = profile?.nft_purchases || [];
+    if (!currentPurchases.includes(tokenId)) {
+      const { error } = await supabase
+        .from("user_profiles")
+        .update({ nft_purchases: [...currentPurchases, tokenId] })
+        .eq("email", email);
+
+      if (error) throw error;
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Error updating NFT purchase status:", error);
@@ -164,19 +184,38 @@ export const updateNFTPurchaseStatus = async (email: string) => {
   }
 };
 
-// Check if user has already purchased NFT
-export const hasUserPurchasedNFT = async (email: string) => {
+// Get all NFTs purchased by a user
+export const getUserPurchasedNFTs = async (email: string) => {
   try {
     const { data, error } = await supabase
       .from("user_profiles")
-      .select("purchasedNFT")
+      .select("nft_purchases")
       .eq("email", email)
       .single();
 
     if (error) throw error;
-    return data?.purchasedNFT || false;
+    return data?.nft_purchases || [];
+  } catch (error) {
+    console.error("Error getting user's purchased NFTs:", error);
+    return [];
+  }
+};
+
+// Check if user has already purchased a specific NFT
+export const hasUserPurchasedNFT = async (email: string, tokenId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("nft_purchases")
+      .eq("email", email)
+      .single();
+
+    if (error) throw error;
+    return data?.nft_purchases?.includes(tokenId) || false;
   } catch (error) {
     console.error("Error checking NFT purchase status:", error);
     return false;
   }
 };
+
+export default supabase;
