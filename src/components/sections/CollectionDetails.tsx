@@ -23,6 +23,7 @@ import {
   updateNFTPurchaseStatus,
   recordMintedNFT,
 } from "../../lib/supabase";
+import { createCheckoutSession } from "../../lib/stripe";
 
 // ETH price values
 const ETH_PRICE_USD = 0.001; // Price in ETH (0.001 ETH ≈ $2 at ~$2000/ETH)
@@ -227,10 +228,15 @@ const CollectionDetails: React.FC = () => {
     setIsProcessingCardPayment(true);
 
     try {
-      // Use the pre-built Stripe checkout link with success redirect to /my-nfts
-      const successUrl = `${window.location.origin}/my-nfts?token_id=${selectedTokenId}`;
-      window.location.href =
-        "https://buy.stripe.com/test_cNi5kDdoA04lcHoehT1gs00";
+      const checkoutUrl = await createCheckoutSession(
+        user.email,
+        selectedTokenId
+      );
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else {
+        throw new Error("Failed to create checkout session");
+      }
     } catch (error) {
       console.error("Purchase error:", error);
       setError("Failed to initiate card payment. Please try again.");
