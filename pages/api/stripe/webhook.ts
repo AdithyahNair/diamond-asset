@@ -1,18 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
 import { buffer } from "micro";
-import { createClient } from "@supabase/supabase-js";
-
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-04-30.basil",
-});
-
-// Initialize Supabase
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
-);
+import {
+  stripe,
+  allowedEvents,
+  syncPurchaseDataToKV,
+} from "../../../src/lib/stripe";
 
 // Disable body parsing, need the raw body for webhook signature verification
 export const config = {
@@ -31,57 +24,49 @@ export default async function handler(
     return;
   }
 
-  const buf = await buffer(req);
-  const sig = req.headers["stripe-signature"] as string;
+  const body = await buffer(req);
+  const signature = req.headers["stripe-signature"] as string;
+
+  if (!signature) {
+    return res.status(400).json({ error: "No signature found" });
+  }
 
   let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(
-      buf,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET || ""
+      body.toString(),
+      signature,
+      process.env.VITE_STRIPE_WEBHOOK_SECRET || ""
     );
-  } catch (err) {
-    console.error("Webhook signature verification failed:", err);
-    res.status(400).send(`Webhook Error: ${err.message}`);
-    return;
+  } catch (err: any) {
+    console.error("Webhook signature verification failed:", err.message);
+    return res.status(400).json({ error: err.message });
   }
 
-  // Handle the event
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const tokenId = parseInt(session.metadata?.tokenId || "0");
-    const email = session.metadata?.email;
+  // Skip processing if the event isn't one we're tracking
+  if (!allowedEvents.includes(event.type)) {
+    return res.json({ received: true });
+  }
 
-    if (tokenId && email) {
-      try {
-        // Get user by email
-        const { data: userData, error: userError } = await supabase
-          .from("user_profiles")
-          .select("user_id, nft_purchases")
-          .eq("email", email)
-          .single();
+  try {
+    const { customer: customerId } = event.data.object as {
+      customer: string;
+    };
 
-        if (userError) throw userError;
-
-        // Update NFT purchases
-        const { error: updateError } = await supabase
-          .from("user_profiles")
-          .update({
-            nft_purchases: [...(userData.nft_purchases || []), tokenId],
-          })
-          .eq("user_id", userData.user_id);
-
-        if (updateError) throw updateError;
-
-        console.log(`Successfully updated purchase for token ${tokenId}`);
-      } catch (error) {
-        console.error("Error updating purchase in database:", error);
-        // Still return 200 to Stripe
-      }
+    if (typeof customerId !== "string") {
+      throw new Error(
+        `[STRIPE HOOK] Customer ID isn't string.\nEvent type: ${event.type}`
+      );
     }
-  }
 
-  res.json({ received: true });
+    // Process the event asynchronously
+    await syncPurchaseDataToKV(customerId);
+
+    return res.json({ received: true });
+  } catch (error: any) {
+    console.error("[STRIPE HOOK] Error processing event:", error);
+    // Still return 200 to Stripe to prevent retries
+    return res.json({ received: true });
+  }
 }
