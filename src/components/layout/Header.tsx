@@ -1,9 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
+import { effects } from "../../styles/designSystem";
 import { LogOut, User } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import AuthModal from "../auth/AuthModal";
 import WalletStatus from "../wallet/WalletStatus";
+import MobileMenu from "./MobileMenu";
+
+const Logo = () => (
+  <Link to="/" className="flex items-center">
+    <div className="flex items-center">
+      <img
+        src="/images/aquaduct.png"
+        alt="Aquaduct"
+        className="h-8 brightness-0 invert"
+      />
+    </div>
+  </Link>
+);
 
 const Header = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -16,6 +31,9 @@ const Header = () => {
   } = useAuth();
   const [networkName, setNetworkName] = useState<string>("Unknown");
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const checkNetwork = async () => {
@@ -49,40 +67,60 @@ const Header = () => {
     }
   }, [isWalletConnected]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navItems = [
+    { label: "Collections", path: "/collections" },
+    { label: "About", path: "/about" },
+    { label: "Journal", path: "/journal" },
+    { label: "Contact", path: "/contact" },
+  ];
+
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 bg-[#0B1120]/80 backdrop-blur-xl border-b border-white/5">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-8">
-              <Link to="/" className="flex items-center">
-                <img
-                  src="/images/aquaduct.png"
-                  alt="Logo"
-                  className="h-8 brightness-0 invert"
-                />
-              </Link>
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? `${effects.glassmorphism} shadow-lg border-b border-white/5`
+            : "bg-transparent"
+        }`}
+      >
+        <div className="container mx-auto px-6 py-4">
+          <nav className="flex items-center justify-between">
+            <Logo />
 
-              <nav className="hidden md:flex items-center gap-6">
+            {/* Main Navigation */}
+            <div className="hidden md:flex items-center space-x-8">
+              {navItems.map((item) => (
                 <Link
-                  to="/collections"
-                  className="text-gray-300 hover:text-white transition-colors"
+                  key={item.path}
+                  to={item.path}
+                  className={`text-sm font-medium transition-colors duration-300 ${
+                    location.pathname === item.path
+                      ? "text-gold-400"
+                      : "text-white/80 hover:text-white"
+                  }`}
                 >
-                  Collections
+                  {item.label}
                 </Link>
-                <Link
-                  to="/my-nfts"
-                  className="text-gray-300 hover:text-white transition-colors"
-                >
-                  My NFTs
-                </Link>
-              </nav>
+              ))}
             </div>
 
-            <div className="flex items-center gap-4">
+            {/* Auth Section */}
+            <div className="hidden md:flex items-center space-x-4">
               {user ? (
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 text-gray-200 px-4 py-2 rounded-full bg-white/5">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2 text-white/80 px-4 py-2 rounded-full bg-white/5">
                     <User size={16} />
                     <span className="text-sm">
                       {user?.email?.split("@")[0]}
@@ -97,27 +135,68 @@ const Header = () => {
                   )}
                   <button
                     onClick={logout}
-                    className="p-2 rounded-full text-gray-200 hover:text-red-400 hover:bg-red-400/10 transition-all duration-300"
+                    className="p-2 rounded-full text-white/80 hover:text-red-400 hover:bg-red-400/10 transition-all duration-300"
                   >
                     <LogOut size={20} />
                   </button>
                 </div>
               ) : (
-                <button
-                  onClick={() => setIsAuthModalOpen(true)}
-                  className="px-6 py-2 rounded-full text-gray-200 hover:text-white border border-[#1E3A5F] hover:border-[#1E9AD3] hover:bg-[#1E9AD3]/10 font-medium transition-all duration-300"
-                >
-                  Login
-                </button>
+                <>
+                  <button
+                    onClick={() => setIsAuthModalOpen(true)}
+                    className="text-sm font-medium text-white/80 hover:text-white transition-colors duration-300"
+                  >
+                    Login
+                  </button>
+                  <Link
+                    to="/my-nfts"
+                    className="px-4 py-2 text-sm font-medium text-navy-900 bg-gold-400 rounded-full hover:bg-gold-500 transition-colors duration-300"
+                  >
+                    My NFTs
+                  </Link>
+                </>
               )}
             </div>
-          </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="md:hidden p-2 text-white/80 hover:text-white transition-colors duration-300"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          </nav>
         </div>
-      </header>
+      </motion.header>
 
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+      />
+
+      {/* Mobile Menu */}
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        navItems={navItems}
+        user={user}
+        onLogout={logout}
+        walletAddress={walletAddress}
+        networkName={networkName}
+        isCorrectNetwork={isCorrectNetwork}
+        onAuthModalOpen={() => setIsAuthModalOpen(true)}
       />
     </>
   );

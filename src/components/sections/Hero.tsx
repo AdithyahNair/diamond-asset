@@ -1,44 +1,6 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 
-const Navbar = () => {
-  return (
-    <nav className="absolute top-0 left-0 w-full z-50 px-6 py-8">
-      <div className="container mx-auto flex justify-between items-center">
-        <a href="/" className="text-3xl font-serif text-white">
-          Aquaduct
-        </a>
-        <div className="hidden md:flex space-x-8">
-          {["Collections", "About", "Journal", "Contact"].map((item) => (
-            <a
-              key={item}
-              href={`#${item.toLowerCase()}`}
-              className="text-white hover:text-gold-400 transition-colors duration-300 text-lg"
-            >
-              {item}
-            </a>
-          ))}
-        </div>
-        <button className="md:hidden text-white">
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        </button>
-      </div>
-    </nav>
-  );
-};
-
 const Hero = () => {
   useEffect(() => {
     // Add scroll animation logic here if needed
@@ -46,9 +8,6 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-navy-900">
-      {/* Navigation */}
-      <Navbar />
-
       {/* Video Background */}
       <div className="absolute inset-0 w-full h-full">
         <div className="absolute inset-0 bg-black opacity-40 z-10" />
