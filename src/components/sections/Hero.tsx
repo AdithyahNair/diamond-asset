@@ -1,67 +1,113 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { motion } from "framer-motion";
+
+const Navbar = () => {
+  return (
+    <nav className="absolute top-0 left-0 w-full z-50 px-6 py-8">
+      <div className="container mx-auto flex justify-between items-center">
+        <a href="/" className="text-3xl font-serif text-white">
+          Aquaduct
+        </a>
+        <div className="hidden md:flex space-x-8">
+          {["Collections", "About", "Journal", "Contact"].map((item) => (
+            <a
+              key={item}
+              href={`#${item.toLowerCase()}`}
+              className="text-white hover:text-gold-400 transition-colors duration-300 text-lg"
+            >
+              {item}
+            </a>
+          ))}
+        </div>
+        <button className="md:hidden text-white">
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+      </div>
+    </nav>
+  );
+};
 
 const Hero = () => {
+  useEffect(() => {
+    // Add scroll animation logic here if needed
+  }, []);
+
   return (
-    <section className="pt-32 pb-16 md:pt-40 md:pb-24 px-4 md:px-8 lg:px-20 xl:px-24 overflow-hidden bg-[#0B1120]">
-      <div className="container mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <div className="flex flex-col">
-            {/* Main Heading Section */}
-            <div className="mb-8 md:mb-12">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-4">
-                Be a part of <span className="text-[#1E9AD3]">history</span>
-              </h1>
-              <h2 className="text-2xl md:text-3xl font-semibold text-white">
-                Timeless Assets
-              </h2>
-            </div>
+    <section className="relative min-h-screen w-full overflow-hidden bg-navy-900">
+      {/* Navigation */}
+      <Navbar />
 
-            {/* Introduction Section */}
-            <div className="mb-10">
-              <p className="text-lg text-gray-300 mb-5">
-                Since the dawn of time, there have existed treasures formed
-                under immense pressure, heat and the patience of millennia.
-              </p>
-              <p className="text-lg text-gray-300">
-                Diamonds are amongst the rarest and most enduring assets in the
-                natural world. While diamonds are forever, their journeys are
-                not.
-              </p>
-            </div>
-
-            {/* Timeless Turtle Section */}
-            <div>
-              <h3 className="text-xl md:text-2xl font-semibold text-white mb-5">
-                The Timeless Turtle
-              </h3>
-              <p className="text-lg text-gray-300 mb-5">
-                The Timeless Turtle was born as a guardian of these rare assets,
-                a steady guide across turbulent seas of time.
-              </p>
-              <p className="text-lg text-gray-300">
-                In the world of fleeting trends, the Timeless Turtle moves at
-                its own deliberate pace, honoring the eternal nature of the
-                treasures it protects.
-              </p>
-            </div>
-          </div>
-
-          <div className="relative">
-            <div className="w-full h-[500px] md:h-[600px] relative overflow-hidden rounded-2xl">
-              <video
-                className="w-full h-full object-cover"
-                autoPlay
-                loop
-                muted
-                playsInline
-              >
-                <source src="/videos/nft-video.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          </div>
-        </div>
+      {/* Video Background */}
+      <div className="absolute inset-0 w-full h-full">
+        <div className="absolute inset-0 bg-black opacity-40 z-10" />
+        <video
+          className="w-full h-full object-cover"
+          autoPlay
+          loop
+          muted
+          playsInline
+        >
+          <source src="/videos/nft-video.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
       </div>
+
+      {/* Content */}
+      <div className="relative z-20 container mx-auto px-6 h-screen flex items-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="max-w-3xl"
+        >
+          <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white leading-tight mb-6">
+            Timeless <span className="text-gold-400">Elegance</span>
+          </h1>
+          <h2 className="font-serif text-2xl md:text-3xl text-white/90 mb-8">
+            Where luxury meets legacy
+          </h2>
+          <p className="text-lg md:text-xl text-white/80 mb-12 max-w-2xl font-light leading-relaxed">
+            Discover our curated collection of exquisite jewelry pieces, each
+            telling a unique story of craftsmanship and timeless beauty.
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-8 py-4 bg-gold-400 text-navy-900 text-lg font-medium rounded-full hover:bg-gold-500 transition-colors duration-300"
+          >
+            Explore Collection
+          </motion.button>
+        </motion.div>
+      </div>
+
+      {/* Scroll Indicator */}
+      <motion.div
+        animate={{
+          y: [0, 10, 0],
+        }}
+        transition={{
+          duration: 1.5,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20"
+      >
+        <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
+          <div className="w-1 h-3 bg-white/50 rounded-full mt-2" />
+        </div>
+      </motion.div>
     </section>
   );
 };

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800px" height="800px" viewBox="0 0 800 800" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="gradient">
+            <stop stop-color="#D4AF37" stop-opacity="0.2" offset="0%"/>
+            <stop stop-color="#0B1120" stop-opacity="0.1" offset="100%"/>
+        </linearGradient>
+        <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3"/>
+        </filter>
+    </defs>
+    <g stroke="none" fill="none">
+        <!-- Background -->
+        <rect fill="#162033" x="0" y="0" width="800" height="800"/>
+        
+        <!-- Abstract turtle shape -->
+        <path d="M400,200 C550,200 650,300 650,450 C650,600 550,700 400,700 C250,700 150,600 150,450 C150,300 250,200 400,200 Z" 
+              fill="url(#gradient)" 
+              opacity="0.8"/>
+        
+        <!-- Shell pattern -->
+        <circle cx="400" cy="450" r="180" 
+                stroke="#D4AF37" 
+                stroke-width="2" 
+                opacity="0.3"/>
+        <circle cx="400" cy="450" r="150" 
+                stroke="#D4AF37" 
+                stroke-width="2" 
+                opacity="0.2"/>
+        <circle cx="400" cy="450" r="120" 
+                stroke="#D4AF37" 
+                stroke-width="2" 
+                opacity="0.1"/>
+                
+        <!-- Decorative elements -->
+        <path d="M400,270 L400,630" 
+              stroke="#D4AF37" 
+              stroke-width="2" 
+              opacity="0.2"/>
+        <path d="M270,450 L530,450" 
+              stroke="#D4AF37" 
+              stroke-width="2" 
+              opacity="0.2"/>
+    </g>
+</svg> 

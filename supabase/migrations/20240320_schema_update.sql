@@ -6,8 +6,8 @@ DROP POLICY IF EXISTS "Users can view their own minted NFTs" ON minted_nfts;
 DROP POLICY IF EXISTS "Users can insert their own minted NFTs" ON minted_nfts;
 
 -- Drop existing tables that we don't need
-DROP TABLE IF EXISTS minted_emails;
-DROP TABLE IF EXISTS user_carts;
+DROP TABLE IF EXISTS minted_nfts;
+DROP TABLE IF EXISTS user_profiles;
 
 -- Create user_profiles table
 CREATE TABLE user_profiles (
