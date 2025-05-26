@@ -29,6 +29,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   isCorrectNetwork,
   onAuthModalOpen,
 }) => {
+  const defaultNavItems = [{ label: "Collections", path: "/collections" }];
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -112,16 +114,25 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               {/* Auth Actions */}
               <div className="p-4 border-t border-white/10 space-y-4">
                 {user ? (
-                  <button
-                    onClick={() => {
-                      onLogout();
-                      onClose();
-                    }}
-                    className="flex items-center justify-center w-full space-x-2 py-2 text-white/80 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all duration-300"
-                  >
-                    <LogOut size={18} />
-                    <span>Logout</span>
-                  </button>
+                  <>
+                    <Link
+                      to="/my-nfts"
+                      onClick={onClose}
+                      className="block w-full py-2 text-center text-navy-900 bg-gold-400 rounded-full hover:bg-gold-500 transition-colors duration-300"
+                    >
+                      My NFTs
+                    </Link>
+                    <button
+                      onClick={() => {
+                        onLogout();
+                        onClose();
+                      }}
+                      className="flex items-center justify-center w-full space-x-2 py-2 text-white/80 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all duration-300"
+                    >
+                      <LogOut size={18} />
+                      <span>Logout</span>
+                    </button>
+                  </>
                 ) : (
                   <>
                     <button

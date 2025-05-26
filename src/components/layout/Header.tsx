@@ -76,12 +76,7 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navItems = [
-    { label: "Collections", path: "/collections" },
-    { label: "About", path: "/about" },
-    { label: "Journal", path: "/journal" },
-    { label: "Contact", path: "/contact" },
-  ];
+  const navItems = [{ label: "Collections", path: "/collections" }];
 
   return (
     <>
@@ -133,6 +128,12 @@ const Header = () => {
                       isCorrectNetwork={isCorrectNetwork}
                     />
                   )}
+                  <Link
+                    to="/my-nfts"
+                    className="px-4 py-2 text-sm font-medium text-navy-900 bg-gold-400 rounded-full hover:bg-gold-500 transition-colors duration-300"
+                  >
+                    My NFTs
+                  </Link>
                   <button
                     onClick={logout}
                     className="p-2 rounded-full text-white/80 hover:text-red-400 hover:bg-red-400/10 transition-all duration-300"

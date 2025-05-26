@@ -1,5 +1,3 @@
-export interface User {
-  email: string | null;
-  uid: string;
-  // Add any other user properties that might be needed
-}
+import { User as SupabaseUser } from "@supabase/supabase-js";
+
+export type User = SupabaseUser;
