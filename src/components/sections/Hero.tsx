@@ -31,20 +31,20 @@ const Hero = () => {
           transition={{ duration: 0.8 }}
           className="max-w-3xl"
         >
-          <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white leading-tight mb-6">
+          <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white leading-tight mb-4">
             Timeless <span className="text-gold-400">Elegance</span>
           </h1>
-          <h2 className="font-serif text-2xl md:text-3xl text-white/90 mb-8">
+          <h2 className="font-serif text-2xl md:text-3xl text-white/90 mb-4">
             Where luxury meets legacy
           </h2>
-          <p className="text-lg md:text-xl text-white/80 mb-12 max-w-2xl font-light leading-relaxed">
+          <p className="text-lg md:text-xl text-white/80 mb-6 max-w-2xl font-light leading-relaxed">
             Discover our curated collection of exquisite jewelry pieces, each
             telling a unique story of craftsmanship and timeless beauty.
           </p>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-4 bg-gold-400 text-navy-900 text-lg font-medium rounded-full hover:bg-gold-500 transition-colors duration-300"
+            className="px-8 py-3 bg-gold-400 text-navy-900 text-lg font-medium rounded-full hover:bg-gold-500 transition-colors duration-300"
           >
             Explore Collection
           </motion.button>
@@ -61,7 +61,7 @@ const Hero = () => {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20"
+        className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20"
       >
         <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
           <div className="w-1 h-3 bg-white/50 rounded-full mt-2" />

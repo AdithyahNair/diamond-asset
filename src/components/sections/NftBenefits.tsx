@@ -187,14 +187,29 @@ const NftBenefits = () => {
   ];
 
   return (
-    <section className="relative py-24 md:py-32 bg-navy-900 overflow-hidden">
-      {/* Background Elements */}
+    <section className="relative overflow-hidden bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900">
+      {/* Background Pattern */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-radial from-gold-400/5 to-transparent opacity-30" />
-        <div className="absolute bottom-0 right-0 w-1/3 h-full bg-gradient-radial from-gold-400/5 to-transparent opacity-30" />
+        <div className="absolute inset-0 opacity-5">
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute"
+              style={{
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                width: "1px",
+                height: "1px",
+                backgroundColor: "#D4AF37",
+                boxShadow: "0 0 15px 2px #D4AF37",
+              }}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="relative container mx-auto px-6">
+      {/* Content */}
+      <div className="container mx-auto px-6 py-24">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -225,22 +240,6 @@ const NftBenefits = () => {
             />
           ))}
         </div>
-
-        {/* Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="text-center mt-20"
-        >
-          <button className="bg-gold-400 text-navy-900 px-8 py-4 rounded-full text-lg font-medium hover:bg-gold-500 transition-colors duration-300">
-            Join the Waitlist
-          </button>
-          <p className="text-white/60 mt-4 text-sm">
-            Limited spots available. Early access coming soon.
-          </p>
-        </motion.div>
       </div>
     </section>
   );
