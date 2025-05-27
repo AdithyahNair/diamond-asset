@@ -2,8 +2,6 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/layout/Header";
 import Hero from "./components/sections/Hero";
-import Story from "./components/sections/Story";
-import Philosophy from "./components/sections/Philosophy";
 import Mission from "./components/sections/Mission";
 import TimelessTurtle from "./components/sections/TimelessTurtle";
 import Benefits from "./components/sections/Benefits";
@@ -30,8 +28,6 @@ function App() {
               element={
                 <main>
                   <Hero />
-                  <Story />
-                  <Philosophy />
                   <Mission />
                   <TimelessTurtle />
                   <Benefits />
