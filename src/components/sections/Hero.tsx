@@ -19,7 +19,7 @@ const Hero = () => {
             className="w-1/2 pr-8"
           >
             <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white leading-tight mb-4">
-              The Timeless <span className="text-gold-400">Experience</span>
+              The Timeless <span className="text-cyan-400">Experience</span>
             </h1>
             <h2 className="font-serif text-2xl md:text-3xl text-white/90 mb-4">
               Where luxury meets legacy
@@ -31,7 +31,7 @@ const Hero = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-3 bg-gold-400 text-navy-900 text-lg font-medium rounded-full hover:bg-gold-500 transition-colors duration-300"
+              className="px-8 py-3 bg-cyan-400 text-navy-900 text-lg font-medium rounded-full hover:bg-cyan-500 transition-colors duration-300"
             >
               Explore Collection
             </motion.button>

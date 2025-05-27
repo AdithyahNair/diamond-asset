@@ -87,7 +87,7 @@ const BenefitCard: React.FC<BenefitCardProps> = ({
       className="bg-navy-800 rounded-2xl p-8 border border-gold-400/10 hover:border-gold-400/30 transition-colors duration-300"
     >
       <div className="flex flex-col items-center text-center">
-        <div className="text-gold-400 mb-6">
+        <div className="text-cyan-400 mb-6">
           <Icon />
         </div>
         <h3 className="font-serif text-2xl text-white mb-6">{title}</h3>
@@ -109,7 +109,7 @@ const Benefits = () => {
       icon: CoCreateIcon,
       title: "Co-create the timeless turtle",
       benefits: [
-        "Collaborate in the creation of the timeless turtle, a one of a kind jewelry piece to be made by renowned jewelry designer Jean Paul Xavier",
+        "Collaborate in the creation of the timeless turtle, a one of a kind jewelry piece made by renowned jewelry designer Jean Paul Xavier",
         "Shape its story through motifs etched on its shell and body for eternity & vote on naming the creation",
       ],
     },

@@ -130,14 +130,14 @@ const BenefitCard: React.FC<BenefitCardProps> = ({
       className="bg-navy-800/50 rounded-2xl p-8 border border-gold-400/10 hover:border-gold-400/30 transition-all duration-300"
     >
       <div className="flex flex-col h-full">
-        <div className="text-gold-400 mb-6">
+        <div className="text-cyan-400 mb-6">
           <Icon />
         </div>
         <h3 className="text-2xl font-serif text-white mb-6">{title}</h3>
         <ul className="space-y-4 text-white/80 flex-grow">
           {benefits.map((benefit, index) => (
             <li key={index} className="flex items-start">
-              <span className="text-gold-400 mr-3">•</span>
+              <span className="text-cyan-400 mr-3">•</span>
               <span className="leading-relaxed">{benefit}</span>
             </li>
           ))}

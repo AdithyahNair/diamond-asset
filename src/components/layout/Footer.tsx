@@ -25,7 +25,7 @@ const SocialIcon = ({
     href={href}
     target="_blank"
     rel="noopener noreferrer"
-    className="w-10 h-10 flex items-center justify-center rounded-full border border-gold-400/20 text-gold-400 hover:bg-gold-400/10 transition-colors duration-300"
+    className="w-10 h-10 flex items-center justify-center rounded-full border border-cyan-400/20 text-cyan-400 hover:bg-cyan-400/10 transition-colors duration-300"
   >
     {children}
   </a>
@@ -70,7 +70,7 @@ const Footer = () => {
               Be part of a community that understands and appreciates the true
               value of timeless assets.
             </p>
-            <button className="bg-gold-400 text-navy-900 px-8 py-4 rounded-full text-lg font-medium hover:bg-gold-500 transition-colors duration-300">
+            <button className="bg-cyan-400 text-navy-900 px-8 py-4 rounded-full text-lg font-medium hover:bg-cyan-500 transition-colors duration-300">
               Become a Member
             </button>
           </motion.div>

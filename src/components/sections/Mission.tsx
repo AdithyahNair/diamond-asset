@@ -15,8 +15,8 @@ const Mission = () => {
     <section className="relative py-24 md:py-32 bg-gradient-to-b from-navy-900 to-navy-800 overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-gold-400 rounded-full blur-[128px] -translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-gold-400 rounded-full blur-[128px] translate-x-1/2 translate-y-1/2" />
+        <div className="absolute top-0 left-0 w-96 h-96 bg-cyan-400 rounded-full blur-[128px] -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-cyan-400 rounded-full blur-[128px] translate-x-1/2 translate-y-1/2" />
       </div>
 
       <div className="relative container mx-auto px-6 max-w-4xl" ref={ref}>
@@ -47,7 +47,7 @@ const Mission = () => {
               crisis unfolds:
             </p>
 
-            <p className="font-serif text-2xl md:text-3xl text-gold-400 leading-relaxed">
+            <p className="font-serif text-2xl md:text-3xl text-cyan-400 leading-relaxed">
               The most meaningful treasures — true, storied, and rare — risk
               being forgotten.
             </p>
@@ -61,7 +61,7 @@ const Mission = () => {
 
           {/* Decorative line */}
           <motion.div variants={fadeUpVariants} className="pt-12">
-            <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-gold-400 to-transparent mx-auto" />
+            <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto" />
           </motion.div>
         </motion.div>
       </div>

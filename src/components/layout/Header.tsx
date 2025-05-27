@@ -102,7 +102,7 @@ const Header = () => {
                   to={item.path}
                   className={`text-sm font-medium transition-colors duration-300 ${
                     location.pathname === item.path
-                      ? "text-gold-400"
+                      ? "text-cyan-400"
                       : "text-white/80 hover:text-white"
                   }`}
                 >
@@ -130,7 +130,7 @@ const Header = () => {
                   )}
                   <Link
                     to="/my-nfts"
-                    className="px-4 py-2 text-sm font-medium text-navy-900 bg-gold-400 rounded-full hover:bg-gold-500 transition-colors duration-300"
+                    className="px-4 py-2 text-sm font-medium text-navy-900 bg-cyan-400 rounded-full hover:bg-cyan-500 transition-colors duration-300"
                   >
                     My NFTs
                   </Link>
@@ -151,7 +151,7 @@ const Header = () => {
                   </button>
                   <Link
                     to="/my-nfts"
-                    className="px-4 py-2 text-sm font-medium text-navy-900 bg-gold-400 rounded-full hover:bg-gold-500 transition-colors duration-300"
+                    className="px-4 py-2 text-sm font-medium text-navy-900 bg-cyan-400 rounded-full hover:bg-cyan-500 transition-colors duration-300"
                   >
                     My NFTs
                   </Link>

@@ -82,7 +82,7 @@ const TimelessTurtle = () => {
                   transition={{ duration: 0.6, delay: 0.4 }}
                   className="inline-block"
                 >
-                  <p className="text-2xl md:text-3xl font-serif text-gold-400 leading-relaxed">
+                  <p className="text-2xl md:text-3xl font-serif text-cyan-400 leading-relaxed">
                     This is your invitation to become a founding member of the
                     Timeless Experience.
                   </p>

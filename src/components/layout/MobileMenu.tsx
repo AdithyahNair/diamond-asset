@@ -102,7 +102,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                       <Link
                         to={item.path}
                         onClick={onClose}
-                        className="block py-2 text-white/80 hover:text-gold-400 transition-colors duration-300"
+                        className="block py-2 text-white/80 hover:text-cyan-400 transition-colors duration-300"
                       >
                         {item.label}
                       </Link>
@@ -118,7 +118,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                     <Link
                       to="/my-nfts"
                       onClick={onClose}
-                      className="block w-full py-2 text-center text-navy-900 bg-gold-400 rounded-full hover:bg-gold-500 transition-colors duration-300"
+                      className="block w-full py-2 text-center text-navy-900 bg-cyan-400 rounded-full hover:bg-cyan-500 transition-colors duration-300"
                     >
                       My NFTs
                     </Link>
@@ -147,7 +147,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                     <Link
                       to="/my-nfts"
                       onClick={onClose}
-                      className="block w-full py-2 text-center text-navy-900 bg-gold-400 rounded-full hover:bg-gold-500 transition-colors duration-300"
+                      className="block w-full py-2 text-center text-navy-900 bg-cyan-400 rounded-full hover:bg-cyan-500 transition-colors duration-300"
                     >
                       My NFTs
                     </Link>
