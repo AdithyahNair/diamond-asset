@@ -7,7 +7,7 @@ const Hero = () => {
   }, []);
 
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-navy-900">
+    <section className="relative min-h-screen w-full overflow-hidden bg-black">
       {/* Main Container */}
       <div className="container mx-auto px-6 h-screen">
         <div className="flex h-full items-center">

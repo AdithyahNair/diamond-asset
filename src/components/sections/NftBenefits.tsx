@@ -127,9 +127,21 @@ const BenefitCard: React.FC<BenefitCardProps> = ({
       viewport={{ once: true }}
       transition={{ duration: 0.6, delay }}
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
-      className="bg-navy-800/50 rounded-2xl p-8 border border-gold-400/10 hover:border-gold-400/30 transition-all duration-300"
+      className="bg-black/50 rounded-2xl p-8 border border-cyan-400/10 hover:border-cyan-400/30 transition-all duration-300 relative group"
     >
-      <div className="flex flex-col h-full">
+      {/* Glowing border effect */}
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-400/0 via-cyan-400/10 to-cyan-400/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+      {/* Top accent line */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+
+      {/* Corner accents */}
+      <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-cyan-400/30" />
+      <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-cyan-400/30" />
+      <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-cyan-400/30" />
+      <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-cyan-400/30" />
+
+      <div className="flex flex-col h-full relative">
         <div className="text-cyan-400 mb-6">
           <Icon />
         </div>
@@ -187,7 +199,7 @@ const NftBenefits = () => {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-navy-900 via-navy-800 to-navy-900">
+    <section className="relative overflow-hidden bg-gradient-to-b from-black via-black to-black">
       {/* Background Pattern */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 opacity-5">
@@ -225,7 +237,13 @@ const NftBenefits = () => {
             An NFT collection will be launched for those of you interested in
             the storyline of the timeless turtle. Benefits to NFT holders:
           </p>
-          <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-gold-400 to-transparent mx-auto" />
+          <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mb-16" />
+
+          {/* Section corner decorations */}
+          <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-cyan-400/30" />
+          <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-cyan-400/30" />
+          <div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-cyan-400/30" />
+          <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-cyan-400/30" />
         </motion.div>
 
         {/* Benefits Grid */}

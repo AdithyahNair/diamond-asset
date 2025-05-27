@@ -33,7 +33,7 @@ const SocialIcon = ({
 
 const Footer = () => {
   return (
-    <footer className="relative bg-navy-900 overflow-hidden">
+    <footer className="relative bg-black overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 opacity-5">
@@ -55,7 +55,7 @@ const Footer = () => {
       </div>
 
       {/* Final CTA Section */}
-      <div className="relative bg-gradient-to-b from-navy-800 via-navy-900 to-navy-900">
+      <div className="relative bg-gradient-to-b from-black via-black to-black">
         <div className="container mx-auto px-6 py-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

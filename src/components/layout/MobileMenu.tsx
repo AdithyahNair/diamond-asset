@@ -50,7 +50,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "tween", duration: 0.3 }}
-            className={`${effects.glassmorphism} fixed top-0 right-0 w-64 h-full z-50 bg-navy-900/95`}
+            className={`${effects.glassmorphism} fixed top-0 right-0 w-64 h-full z-50 bg-black/95`}
           >
             <div className="flex flex-col h-full">
               {/* Close Button */}

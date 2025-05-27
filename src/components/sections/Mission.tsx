@@ -12,7 +12,7 @@ const Mission = () => {
   };
 
   return (
-    <section className="relative py-24 md:py-32 bg-gradient-to-b from-navy-900 to-navy-800 overflow-hidden">
+    <section className="relative py-24 md:py-32 bg-gradient-to-b from-black to-black overflow-hidden">
       {/* Decorative elements */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 left-0 w-96 h-96 bg-cyan-400 rounded-full blur-[128px] -translate-x-1/2 -translate-y-1/2" />

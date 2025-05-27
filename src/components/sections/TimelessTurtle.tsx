@@ -16,11 +16,11 @@ const TimelessTurtle = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative py-24 md:py-32 bg-navy-900 overflow-hidden"
+      className="relative py-24 md:py-32 bg-black overflow-hidden"
     >
       {/* Background decorative elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-radial from-gold-400/5 to-transparent opacity-30" />
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-radial from-cyan-400/5 to-transparent opacity-30" />
       </div>
 
       <div className="container mx-auto px-6">
@@ -34,9 +34,9 @@ const TimelessTurtle = () => {
             animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <div className="relative aspect-square rounded-2xl overflow-hidden bg-navy-800">
+            <div className="relative aspect-square rounded-2xl overflow-hidden bg-black/50">
               {/* Video gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-gold-400/20 to-transparent mix-blend-overlay z-10" />
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 to-transparent mix-blend-overlay z-10" />
 
               {/* Video player */}
               <video
@@ -51,8 +51,8 @@ const TimelessTurtle = () => {
               </video>
 
               {/* Decorative elements */}
-              <div className="absolute inset-0 border border-gold-400/20 rounded-2xl z-20" />
-              <div className="absolute -inset-1 bg-gradient-to-r from-gold-400/20 to-transparent blur-xl opacity-20 z-20" />
+              <div className="absolute inset-0 border border-cyan-400/20 rounded-2xl z-20" />
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/20 to-transparent blur-xl opacity-20 z-20" />
             </div>
           </motion.div>
 
@@ -96,7 +96,7 @@ const TimelessTurtle = () => {
                 transition={{ duration: 0.8, delay: 0.6 }}
                 className="pt-8"
               >
-                <div className="h-[1px] w-24 bg-gradient-to-r from-gold-400 to-transparent" />
+                <div className="h-[1px] w-24 bg-gradient-to-r from-cyan-400 to-transparent" />
               </motion.div>
             </div>
           </motion.div>
