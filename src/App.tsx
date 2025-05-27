@@ -24,9 +24,11 @@ const AppLayout = () => {
   const location = useLocation();
 
   // List of paths where footer should not be shown
-  const noFooterPaths = ["/my-nfts"];
+  const noFooterPaths = ["/my-nfts", "/collections"];
 
-  const shouldShowFooter = !noFooterPaths.includes(location.pathname);
+  const shouldShowFooter =
+    !noFooterPaths.includes(location.pathname) &&
+    !location.pathname.startsWith("/collection/");
 
   return (
     <div className="min-h-screen bg-[#0B1120] text-white overflow-x-hidden">
