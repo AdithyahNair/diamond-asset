@@ -1,5 +1,10 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import Header from "./components/layout/Header";
 import Hero from "./components/sections/Hero";
 import Mission from "./components/sections/Mission";
@@ -14,35 +19,47 @@ import MyNFTs from "./components/sections/MyNFTs";
 import { AuthProvider } from "./contexts/AuthContext";
 // import { CartProvider } from "./contexts/CartContext";
 
+// Component to handle layout and footer visibility
+const AppLayout = () => {
+  const location = useLocation();
+
+  // List of paths where footer should not be shown
+  const noFooterPaths = ["/my-nfts"];
+
+  const shouldShowFooter = !noFooterPaths.includes(location.pathname);
+
+  return (
+    <div className="min-h-screen bg-[#0B1120] text-white overflow-x-hidden">
+      <Header />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <main>
+              <Hero />
+              <Mission />
+              <TimelessTurtle />
+              <Benefits />
+              <NftBenefits />
+            </main>
+          }
+        />
+        <Route path="/collections" element={<CollectionsList />} />
+        <Route path="/collection/:id" element={<CollectionDetails />} />
+        <Route path="/my-nfts" element={<MyNFTs />} />
+      </Routes>
+      {shouldShowFooter && <Footer />}
+    </div>
+  );
+};
+
 function App() {
   return (
     <Router>
       <AuthProvider>
         {/* Commented out CartProvider */}
         {/* <CartProvider> */}
-        <div className="min-h-screen bg-[#0B1120] text-white overflow-x-hidden">
-          <Header />
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <main>
-                  <Hero />
-                  <Mission />
-                  <TimelessTurtle />
-                  <Benefits />
-                  <NftBenefits />
-                </main>
-              }
-            />
-            <Route path="/collections" element={<CollectionsList />} />
-            <Route path="/collection/:id" element={<CollectionDetails />} />
-            <Route path="/my-nfts" element={<MyNFTs />} />
-          </Routes>
-          <Footer />
-          {/* Commented out CartSidebar */}
-          {/* <CartSidebar /> */}
-        </div>
+        <AppLayout />
         {/* </CartProvider> */}
       </AuthProvider>
     </Router>

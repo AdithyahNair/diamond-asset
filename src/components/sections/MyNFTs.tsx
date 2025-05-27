@@ -4,6 +4,7 @@ import { getUserPurchasedNFTs } from "../../lib/supabase";
 import { getNftContract, claimToken } from "../../lib/nftContract";
 import { ethers } from "ethers";
 import { useSearchParams } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const MyNFTs = () => {
   const { user, isWalletConnected, connectWallet } = useAuth();
@@ -80,84 +81,142 @@ const MyNFTs = () => {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 pt-32 pb-8">
-        <div className="text-center text-gray-300">
-          Please log in to view your NFTs
+      <div className="min-h-screen bg-black pt-32 pb-8">
+        <div className="container mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <h1 className="font-serif text-4xl text-white mb-4">My NFTs</h1>
+            <p className="text-white/60">Please log in to view your NFTs</p>
+          </motion.div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 pt-32 pb-8">
-      <h1 className="text-3xl font-bold mb-8 text-white">My NFTs</h1>
+    <div className="min-h-screen bg-black pt-32 pb-16">
+      <div className="container mx-auto px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-12"
+        >
+          <h1 className="font-serif text-4xl text-white mb-4">My NFTs</h1>
+          <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
+        </motion.div>
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-900/20 border border-red-800/30 rounded-lg text-red-300 text-sm">
-          {error}
-        </div>
-      )}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm"
+          >
+            {error}
+          </motion.div>
+        )}
 
-      {success && (
-        <div className="mb-4 p-3 bg-green-900/20 border border-green-800/30 rounded-lg text-green-300 text-sm">
-          {success}
-        </div>
-      )}
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-cyan-400/10 border border-cyan-400/20 rounded-xl text-cyan-400 text-sm"
+          >
+            {success}
+          </motion.div>
+        )}
 
-      {purchasedNFTs.length === 0 ? (
-        <div className="text-center text-gray-300">
-          You haven't purchased any NFTs yet
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {purchasedNFTs.map((tokenId) => (
-            <div
-              key={tokenId}
-              className="bg-[#13111C]/60 rounded-xl p-6 border border-gray-700/50 backdrop-blur-sm"
+        {purchasedNFTs.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-center py-16"
+          >
+            <p className="text-white/60 text-lg">
+              You haven't purchased any NFTs yet
+            </p>
+            <motion.button
+              whileHover={{ y: -2 }}
+              className="mt-6 px-8 py-3 bg-cyan-400 text-black rounded-xl font-medium hover:bg-cyan-300 transition-colors"
+              onClick={() => (window.location.href = "/collections")}
             >
-              <div className="aspect-square bg-[#1A191F] rounded-lg mb-4 overflow-hidden">
-                {/* NFT Image placeholder */}
-                <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg font-medium">
-                  NFT #{tokenId}
-                </div>
-              </div>
+              Browse Collections
+            </motion.button>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            {purchasedNFTs.map((tokenId, index) => (
+              <motion.div
+                key={tokenId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="bg-black/50 rounded-2xl p-6 border border-cyan-400/20 hover:border-cyan-400/30 transition-all duration-300 relative group"
+              >
+                {/* Glowing border effect */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-400/0 via-cyan-400/10 to-cyan-400/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-              <h3 className="text-xl font-semibold mb-2 text-white">
-                Turtle Timepiece #{tokenId}
-              </h3>
+                {/* Corner decorations */}
+                <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-cyan-400/30" />
+                <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-cyan-400/30" />
+                <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-cyan-400/30" />
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-cyan-400/30" />
 
-              {claimedNFTs.includes(tokenId) ? (
-                <div className="text-green-400 text-sm mb-4 flex items-center">
-                  <span className="mr-1">Claimed</span>
-                  <svg
-                    className="w-4 h-4"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                <div className="relative">
+                  <div className="aspect-square bg-black/60 rounded-xl mb-6 overflow-hidden border border-cyan-400/20">
+                    <div className="w-full h-full flex items-center justify-center text-cyan-400 text-2xl font-serif">
+                      #{tokenId}
+                    </div>
+                  </div>
+
+                  <h3 className="text-2xl font-serif text-white mb-4">
+                    Turtle Timepiece #{tokenId}
+                  </h3>
+
+                  {claimedNFTs.includes(tokenId) ? (
+                    <div className="flex items-center space-x-2 text-cyan-400">
+                      <svg
+                        className="w-5 h-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <span className="font-medium">Claimed</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleClaim(tokenId)}
+                      disabled={isClaiming[tokenId]}
+                      className={`w-full py-3 px-4 rounded-xl transition-all duration-300 ${
+                        isClaiming[tokenId]
+                          ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
+                          : "bg-cyan-400 hover:bg-cyan-300 text-black shadow-lg shadow-cyan-400/20 hover:shadow-cyan-400/30"
+                      }`}
+                    >
+                      {isClaiming[tokenId] ? "Claiming..." : "Claim NFT"}
+                    </button>
+                  )}
                 </div>
-              ) : (
-                <button
-                  onClick={() => handleClaim(tokenId)}
-                  disabled={isClaiming[tokenId]}
-                  className={`w-full py-3 px-4 rounded-lg transition-all duration-200 ${
-                    isClaiming[tokenId]
-                      ? "bg-purple-900/50 text-purple-300 cursor-not-allowed"
-                      : "bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-purple-500/20"
-                  }`}
-                >
-                  {isClaiming[tokenId] ? "Claiming..." : "Claim NFT"}
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 };

@@ -44,22 +44,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50">
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80 backdrop-blur-md"
         onClick={onClose}
       />
       <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="bg-white rounded-xl w-full max-w-md relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1E9AD3] to-[#0056a8]" />
+        <div className="bg-black/90 rounded-2xl w-full max-w-md relative overflow-hidden shadow-2xl border border-cyan-400/20">
+          {/* Glowing top border */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
+
+          {/* Corner decorations */}
+          <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-cyan-400/30" />
+          <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-cyan-400/30" />
+          <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-cyan-400/30" />
+          <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-cyan-400/30" />
 
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-700"
+            className="absolute top-4 right-4 p-1.5 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition-colors"
           >
             <X size={20} />
           </button>
 
           <div className="p-8">
-            <h2 className="text-2xl font-bold text-center mb-6 text-[#0B1120]">
+            <h2 className="text-3xl font-serif text-center mb-8 text-white">
               {!user
                 ? isSignUp
                   ? "Create Your Account"
@@ -68,26 +75,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </h2>
 
             {!user ? (
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 {error && (
-                  <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 flex items-start">
+                  <div className="p-4 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20 flex items-start">
                     <span className="text-sm">{error}</span>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-gray-700 text-sm font-medium mb-2">
+                  <label className="block text-white/80 text-sm font-medium mb-2">
                     Email Address
                   </label>
-                  <div className="relative">
+                  <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail size={18} className="text-gray-400" />
+                      <Mail
+                        size={18}
+                        className="text-cyan-400/50 group-hover:text-cyan-400 transition-colors"
+                      />
                     </div>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E9AD3] focus:border-transparent transition-all text-gray-900 bg-white"
+                      className="w-full pl-10 px-4 py-3 bg-black/50 border border-cyan-400/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-transparent transition-all text-white placeholder-white/30"
                       placeholder="your@email.com"
                       required
                     />
@@ -95,18 +105,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 text-sm font-medium mb-2">
+                  <label className="block text-white/80 text-sm font-medium mb-2">
                     Password
                   </label>
-                  <div className="relative">
+                  <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Lock size={18} className="text-gray-400" />
+                      <Lock
+                        size={18}
+                        className="text-cyan-400/50 group-hover:text-cyan-400 transition-colors"
+                      />
                     </div>
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E9AD3] focus:border-transparent transition-all text-gray-900 bg-white"
+                      className="w-full pl-10 px-4 py-3 bg-black/50 border border-cyan-400/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-transparent transition-all text-white placeholder-white/30"
                       placeholder={
                         isSignUp ? "Create password" : "Enter password"
                       }
@@ -114,10 +127,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     />
                   </div>
                   {!isSignUp && (
-                    <div className="text-right mt-1">
+                    <div className="text-right mt-2">
                       <button
                         type="button"
-                        className="text-sm text-[#1E9AD3] hover:underline"
+                        className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
                       >
                         Forgot Password?
                       </button>
@@ -128,12 +141,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-[#1E9AD3] to-[#0056a8] text-white py-3 rounded-lg font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:from-[#1789bd] hover:to-[#004e99] transition-all disabled:opacity-70"
+                  className="w-full bg-cyan-400 text-black py-3 rounded-xl font-medium shadow-lg shadow-cyan-400/20 hover:shadow-cyan-400/30 hover:bg-cyan-300 transition-all disabled:opacity-70 mt-6"
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center">
                       <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-black"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -165,7 +178,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   <button
                     type="button"
                     onClick={() => setIsSignUp(!isSignUp)}
-                    className="text-[#1E9AD3] hover:underline text-sm"
+                    className="text-cyan-400 hover:text-cyan-300 transition-colors text-sm"
                   >
                     {isSignUp
                       ? "Already have an account? Login"
@@ -175,58 +188,40 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </form>
             ) : (
               <div className="space-y-6">
-                <div className="p-5 bg-[#F8F9FC] rounded-xl border border-gray-100">
+                <div className="p-6 bg-black/50 rounded-xl border border-cyan-400/20">
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                      <Check size={20} className="text-emerald-600" />
+                    <div className="h-10 w-10 rounded-full bg-cyan-400/20 flex items-center justify-center flex-shrink-0">
+                      <Check size={20} className="text-cyan-400" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-800">
+                      <h3 className="font-medium text-white">
                         Step 1 Complete
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-white/60">
                         Logged in as{" "}
-                        <span className="font-medium">{user.email}</span>
+                        <span className="font-medium text-white/80">
+                          {user.email}
+                        </span>
                       </p>
                     </div>
                   </div>
 
-                  <div className="h-px bg-gray-200 my-4" />
+                  <div className="h-px bg-cyan-400/20 my-4" />
 
-                  <p className="text-sm text-gray-700 leading-relaxed">
+                  <p className="text-sm text-white/70 leading-relaxed">
                     Now connect your wallet to access all features and complete
                     your purchases. Your wallet is required for blockchain
                     transactions.
                   </p>
                 </div>
 
-                {isWalletConnected ? (
-                  <div className="bg-emerald-50 border border-emerald-200 p-5 rounded-xl">
-                    <div className="flex items-center gap-3 text-emerald-800">
-                      <Check size={20} className="text-emerald-600" />
-                      <span className="font-medium">
-                        Wallet connected successfully!
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm text-emerald-700 pl-8">
-                      You're all set to shop and make purchases.
-                    </p>
-
-                    <button
-                      onClick={onClose}
-                      className="mt-4 w-full bg-emerald-600 text-white py-2.5 rounded-lg hover:bg-emerald-700 transition-colors"
-                    >
-                      Continue Shopping
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={connectWallet}
-                    className="w-full bg-gradient-to-r from-[#1E9AD3] to-[#0056a8] text-white py-3.5 rounded-xl font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:from-[#1789bd] hover:to-[#004e99] transition-all flex items-center justify-center"
-                  >
-                    Connect Wallet
-                  </button>
-                )}
+                <button
+                  onClick={connectWallet}
+                  disabled={isWalletConnected}
+                  className="w-full bg-cyan-400 text-black py-3 rounded-xl font-medium shadow-lg shadow-cyan-400/20 hover:shadow-cyan-400/30 hover:bg-cyan-300 transition-all disabled:opacity-70"
+                >
+                  {isWalletConnected ? "Wallet Connected" : "Connect Wallet"}
+                </button>
               </div>
             )}
           </div>
