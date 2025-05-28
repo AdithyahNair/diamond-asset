@@ -16,7 +16,7 @@ const TimelessTurtle = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative py-24 md:py-32 bg-black overflow-hidden"
+      className="relative py-12 md:py-16 bg-black overflow-hidden"
     >
       {/* Background decorative elements */}
       <div className="absolute inset-0">
@@ -35,24 +35,21 @@ const TimelessTurtle = () => {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <div className="relative aspect-square rounded-2xl overflow-hidden bg-black/50">
-              {/* Video gradient overlay */}
+              {/* Image gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 to-transparent mix-blend-overlay z-10" />
 
-              {/* Video player */}
-              <video
-                className="w-full h-full object-cover"
-                autoPlay
-                loop
-                muted
-                playsInline
-              >
-                <source src="/videos/nft-video.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+              {/* Image container with crop */}
+              <div className="relative w-full h-[108%] -mb-[8%]">
+                <img
+                  src="/images/timeless-turtle.png"
+                  alt="Timeless Turtle"
+                  className="w-full h-full object-cover scale-100 transform"
+                />
+              </div>
 
               {/* Decorative elements */}
-              <div className="absolute inset-0 border border-cyan-400/20 rounded-2xl z-20" />
-              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400/20 to-transparent blur-xl opacity-20 z-20" />
+              <div className="absolute inset-0 rounded-2xl z-20" />
+              <div className="absolute -inset-1 blur-xl opacity-20 z-20" />
             </div>
           </motion.div>
 
