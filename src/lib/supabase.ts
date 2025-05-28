@@ -219,28 +219,44 @@ export const hasUserPurchasedNFT = async (email: string, tokenId: number) => {
 };
 
 // Get available NFTs from Supabase - Using minted_nfts table to avoid RLS issues
-export const getAvailableNFTsFromSupabase = async (): Promise<number> => {
+export const getAvailableNFTsFromSupabase = async (): Promise<{
+  availableCount: number;
+  availableTokens: number[];
+}> => {
   try {
-    // Count total minted NFTs from the minted_nfts table
-    const { count, error } = await supabase
+    // Get all minted token IDs
+    const { data: mintedNFTs, error } = await supabase
       .from("minted_nfts")
-      .select("*", { count: "exact", head: true });
+      .select("token_id");
 
     if (error) {
-      console.error("Error fetching mint count:", error);
+      console.error("Error fetching minted NFTs:", error);
       throw error;
     }
 
-    console.log("Total minted NFTs from minted_nfts table:", count);
+    // Extract the token IDs that are already minted
+    const mintedTokenIds = mintedNFTs.map((nft) => nft.token_id);
+    console.log("Minted token IDs:", mintedTokenIds);
 
-    // Available NFTs = Total NFTs (8) - Total minted NFTs
-    const availableCount = 8 - (count || 0);
-    console.log("Available NFT count:", availableCount);
+    // Generate all possible token IDs (1-8)
+    const allTokenIds = Array.from({ length: 8 }, (_, i) => i + 1);
 
-    return Math.max(0, availableCount);
+    // Filter out the minted tokens to get available ones
+    const availableTokens = allTokenIds.filter(
+      (id) => !mintedTokenIds.includes(id)
+    );
+    console.log("Available token IDs:", availableTokens);
+
+    return {
+      availableCount: availableTokens.length,
+      availableTokens,
+    };
   } catch (error) {
     console.error("Error getting available NFTs:", error);
-    return 0;
+    return {
+      availableCount: 0,
+      availableTokens: [],
+    };
   }
 };
 

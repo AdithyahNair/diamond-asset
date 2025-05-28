@@ -64,13 +64,16 @@ const CollectionDetails: React.FC = () => {
 
   const fetchAvailableFromContract = async () => {
     try {
-      if (!window.ethereum) return [];
+      if (!window.ethereum) return { availableCount: 0, availableTokens: [] };
       const provider = new ethers.BrowserProvider(window.ethereum);
       const availableTokens = await getAvailableNFTs(provider);
-      return availableTokens;
+      return {
+        availableCount: availableTokens.length,
+        availableTokens,
+      };
     } catch (error) {
       console.error("Error fetching available NFTs from contract:", error);
-      return [];
+      return { availableCount: 0, availableTokens: [] };
     }
   };
 
@@ -88,6 +91,7 @@ const CollectionDetails: React.FC = () => {
     try {
       setIsLoading(true);
       let availableCount = 0;
+      let tokens: number[] = [];
 
       console.log("Auth State:", {
         isFullyAuthenticated,
@@ -101,30 +105,27 @@ const CollectionDetails: React.FC = () => {
         // Try Supabase first if we have a user email
         if (user?.email) {
           console.log("Fetching from Supabase for user:", user.email);
-          availableCount = await getAvailableNFTsFromSupabase();
-          console.log("Available count from Supabase:", availableCount);
+          const result = await getAvailableNFTsFromSupabase();
+          availableCount = result.availableCount;
+          tokens = result.availableTokens;
+          console.log("Available from Supabase:", { availableCount, tokens });
         }
 
         // If no count from Supabase and wallet is connected, try contract
         if (availableCount === 0 && window.ethereum && isWalletConnected) {
           console.log("Falling back to contract data");
-          const tokens = await fetchAvailableFromContract();
-          availableCount = tokens.length;
-          console.log("Available count from contract:", availableCount);
+          const result = await fetchAvailableFromContract();
+          availableCount = result.availableCount;
+          tokens = result.availableTokens;
+          console.log("Available from contract:", { availableCount, tokens });
         }
 
-        // Set the available count
+        // Set the available count and tokens
         setAvailable(availableCount);
+        setAvailableTokens(tokens);
 
-        // Generate sequential token IDs for the dropdown
-        const tokenIds = Array.from(
-          { length: availableCount },
-          (_, i) => i + 1
-        );
-        setAvailableTokens(tokenIds);
-
-        if (!selectedTokenId && availableCount > 0) {
-          setSelectedTokenId(tokenIds[0]);
+        if (!selectedTokenId && tokens.length > 0) {
+          setSelectedTokenId(tokens[0]);
         }
         setError(null);
       } else {
