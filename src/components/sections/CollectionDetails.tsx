@@ -225,12 +225,18 @@ const CollectionDetails: React.FC = () => {
       return;
     }
 
+    if (!user.id) {
+      setError("User ID not found. Please try logging in again.");
+      return;
+    }
+
     setError(null);
     setIsProcessingCardPayment(true);
 
     try {
       const checkoutUrl = await createCheckoutSession(
         user.email,
+        user.id,
         selectedTokenId
       );
       if (checkoutUrl) {
