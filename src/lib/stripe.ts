@@ -1,6 +1,9 @@
 import Stripe from "stripe";
 import { supabase } from "./supabase";
 
+// We don't need to redeclare Window interface as it's already defined in lib.dom.d.ts
+// Instead, we'll use the existing window.location.origin directly
+
 // Initialize Stripe with secret key
 const stripe = new Stripe(import.meta.env.VITE_STRIPE_SECRET_KEY || "", {
   apiVersion: "2025-04-30.basil",
@@ -15,10 +18,10 @@ const allowedEvents: Stripe.Event.Type[] = [
   "payment_intent.succeeded",
   "payment_intent.payment_failed",
   "payment_intent.canceled",
-];
+] as const;
 
 // Type for our NFT purchase cache
-type NFT_PURCHASE_CACHE = {
+interface NFT_PURCHASE_CACHE {
   tokenId: number;
   status: "completed" | "pending" | "failed";
   paymentMethod: {
@@ -29,10 +32,10 @@ type NFT_PURCHASE_CACHE = {
     };
   };
   purchaseDate: number;
-};
+}
 
 // Type for expanded PaymentIntent with charges
-type PaymentIntentWithCharges = Stripe.PaymentIntent & {
+interface PaymentIntentWithCharges extends Stripe.PaymentIntent {
   charges: {
     data: Array<
       Stripe.Charge & {
@@ -40,9 +43,12 @@ type PaymentIntentWithCharges = Stripe.PaymentIntent & {
       }
     >;
   };
-};
+}
 
-export async function getOrCreateStripeCustomer(email: string, userId: string) {
+export async function getOrCreateStripeCustomer(
+  email: string,
+  userId: string
+): Promise<string> {
   try {
     // Check if we already have a Stripe customer ID for this user
     const { data: profile } = await supabase
@@ -70,9 +76,9 @@ export async function getOrCreateStripeCustomer(email: string, userId: string) {
       .eq("user_id", userId);
 
     return customer.id;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error in getOrCreateStripeCustomer:", error);
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -84,6 +90,7 @@ export async function createCheckoutSession(
   try {
     // Always ensure we have a customer first
     const customerId = await getOrCreateStripeCustomer(email, userId);
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -106,18 +113,20 @@ export async function createCheckoutSession(
         tokenId: tokenId.toString(),
         userId,
       },
-      success_url: `${window.location.origin}/my-nfts?session_id={CHECKOUT_SESSION_ID}&token_id=${tokenId}`,
-      cancel_url: `${window.location.origin}/collections`,
+      success_url: `${origin}/my-nfts?session_id={CHECKOUT_SESSION_ID}&token_id=${tokenId}`,
+      cancel_url: `${origin}/collections`,
     });
 
-    return session.url || "";
-  } catch (error) {
+    return session.url ?? "";
+  } catch (error: unknown) {
     console.error("Error creating checkout session:", error);
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
-export async function syncPurchaseDataToKV(customerId: string) {
+export async function syncPurchaseDataToKV(
+  customerId: string
+): Promise<boolean> {
   try {
     // Get all successful payments for this customer
     const payments = await stripe.paymentIntents.list({
@@ -138,16 +147,23 @@ export async function syncPurchaseDataToKV(customerId: string) {
 
     // Process each payment and update KV store
     for (const payment of payments.data) {
-      if (payment.status === "succeeded" && payment.metadata.tokenId) {
+      if (payment.status === "succeeded" && payment.metadata?.tokenId) {
         // Retrieve the payment intent with expanded charge data
-        const paymentWithCharges = (await stripe.paymentIntents.retrieve(
+        const paymentIntentResponse = await stripe.paymentIntents.retrieve(
           payment.id,
           {
             expand: ["charges.data.payment_method_details"],
           }
-        )) as PaymentIntentWithCharges;
+        );
 
-        const charge = paymentWithCharges.charges?.data[0];
+        // Type assertion after verifying the response has the required properties
+        const paymentWithCharges =
+          paymentIntentResponse as unknown as PaymentIntentWithCharges;
+        if (!paymentWithCharges.charges?.data?.[0]) {
+          continue;
+        }
+
+        const charge = paymentWithCharges.charges.data[0];
         const cardDetails = charge?.payment_method_details?.card;
 
         const purchaseData: NFT_PURCHASE_CACHE = {
@@ -179,9 +195,9 @@ export async function syncPurchaseDataToKV(customerId: string) {
     }
 
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error syncing purchase data:", error);
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -192,30 +208,84 @@ async function getCurrentPurchases(userId: string): Promise<number[]> {
     .eq("user_id", userId)
     .single();
 
-  return data?.nft_purchases || [];
+  return data?.nft_purchases ?? [];
 }
 
-export async function verifyPayment(sessionId: string): Promise<{
-  success: boolean;
-  tokenId?: number;
-  userId?: string;
-}> {
+// Verify a Stripe payment and update the database
+export const verifyPayment = async (sessionId: string) => {
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    console.log("Verifying payment for session:", sessionId);
 
-    if (session.payment_status === "paid") {
-      return {
-        success: true,
-        tokenId: parseInt(session.metadata?.tokenId || "0"),
-        userId: session.metadata?.userId,
-      };
+    // Get the session from Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ["payment_intent", "customer"],
+    });
+
+    console.log("Session status:", session.status);
+    console.log("Payment status:", session.payment_status);
+
+    if (session.status !== "complete" || session.payment_status !== "paid") {
+      throw new Error("Payment not completed");
     }
 
-    return { success: false };
+    // Get the token ID from the session metadata
+    const tokenId = session.metadata?.tokenId;
+    const userEmail = session.customer_details?.email;
+
+    if (!tokenId || !userEmail) {
+      throw new Error("Missing token ID or user email in session");
+    }
+
+    console.log("Recording purchase:", { tokenId, userEmail });
+
+    // Record the purchase in nft_purchases table
+    const { error: purchaseError } = await supabase
+      .from("nft_purchases")
+      .upsert({
+        user_email: userEmail,
+        token_id: Number(tokenId),
+        status: "completed",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+
+    if (purchaseError) {
+      console.error("Error recording purchase:", purchaseError);
+      throw purchaseError;
+    }
+
+    // Also update the user_profiles table
+    const { data: profileData, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("nft_purchases")
+      .eq("email", userEmail)
+      .single();
+
+    if (profileError) {
+      console.error("Error fetching user profile:", profileError);
+      throw profileError;
+    }
+
+    const currentPurchases = profileData?.nft_purchases || [];
+    if (!currentPurchases.includes(tokenId)) {
+      const { error: updateError } = await supabase
+        .from("user_profiles")
+        .update({
+          nft_purchases: [...currentPurchases, tokenId],
+        })
+        .eq("email", userEmail);
+
+      if (updateError) {
+        console.error("Error updating user profile:", updateError);
+        throw updateError;
+      }
+    }
+
+    return { success: true };
   } catch (error) {
     console.error("Error verifying payment:", error);
-    return { success: false };
+    return { success: false, error };
   }
-}
+};
 
 export { stripe, allowedEvents };

@@ -1,57 +1,155 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
-import { getUserPurchasedNFTs } from "../../lib/supabase";
+import {
+  getUserPurchasedNFTs,
+  updateNFTPurchaseStatus,
+} from "../../lib/supabase";
 import { getNftContract, claimToken } from "../../lib/nftContract";
+import { verifyPayment } from "../../lib/stripe";
 import { ethers } from "ethers";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { supabase } from "../../lib/supabase";
+import { recordMintedNFT } from "../../lib/supabase";
 
 const MyNFTs = () => {
-  const { user, isWalletConnected, connectWallet } = useAuth();
+  const { user, isWalletConnected, connectWallet, walletAddress } = useAuth();
   const [purchasedNFTs, setPurchasedNFTs] = useState<number[]>([]);
   const [claimedNFTs, setClaimedNFTs] = useState<number[]>([]);
   const [isClaiming, setIsClaiming] = useState<{ [key: number]: boolean }>({});
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const checkPurchaseStatus = async () => {
-      if (user?.email) {
-        const purchased = await getUserPurchasedNFTs(user.email);
-        setPurchasedNFTs(purchased);
+  // Check NFT status from database
+  const checkNFTStatus = async () => {
+    if (!user?.email) return;
+
+    console.log("Checking NFT status for:", user.email);
+    try {
+      // 1. Get all NFTs from user_profiles (these are all purchased NFTs)
+      const { data: profileData, error: profileError } = await supabase
+        .from("user_profiles")
+        .select("nft_purchases")
+        .eq("email", user.email)
+        .single();
+
+      if (profileError) {
+        throw profileError;
       }
-    };
-    checkPurchaseStatus();
+
+      // Remove duplicates from nft_purchases array and ensure numbers
+      const allPurchasedNFTs = [
+        ...new Set(profileData?.nft_purchases || []),
+      ].map(Number);
+      console.log("All purchased NFTs (deduplicated):", allPurchasedNFTs);
+
+      // 2. Get minted NFTs (these are claimed)
+      const { data: mintedData, error: mintedError } = await supabase
+        .from("minted_nfts")
+        .select("token_id")
+        .eq("email", user.email);
+
+      if (mintedError) {
+        throw mintedError;
+      }
+
+      const mintedNFTs = [...new Set(mintedData.map((item) => item.token_id))];
+      console.log("Minted (claimed) NFTs:", mintedNFTs);
+
+      // 3. Separate into claimed and unclaimed (all values are numbers now)
+      const claimed = allPurchasedNFTs.filter((id) => mintedNFTs.includes(id));
+      const unclaimed = allPurchasedNFTs.filter(
+        (id) => !mintedNFTs.includes(id)
+      );
+
+      console.log("Final status:", { claimed, unclaimed });
+      setClaimedNFTs(claimed);
+      setPurchasedNFTs(unclaimed);
+
+      // 4. Clean up duplicates in database if found
+      if (allPurchasedNFTs.length !== profileData?.nft_purchases?.length) {
+        console.log("Found duplicates, cleaning up database...");
+        const { error: updateError } = await supabase
+          .from("user_profiles")
+          .update({ nft_purchases: allPurchasedNFTs })
+          .eq("email", user.email);
+
+        if (updateError) {
+          console.error("Error cleaning up duplicates:", updateError);
+        }
+      }
+    } catch (err) {
+      console.error("Error checking NFT status:", err);
+      setError("Failed to load your NFTs. Please try refreshing the page.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial load and periodic refresh
+  useEffect(() => {
+    checkNFTStatus();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(checkNFTStatus, 30000);
+    return () => clearInterval(interval);
   }, [user]);
 
+  // Handle Stripe redirect
   useEffect(() => {
-    const checkClaimedStatus = async () => {
-      if (!isWalletConnected || !purchasedNFTs.length) return;
+    const handleStripeRedirect = async () => {
+      const sessionId = searchParams.get("session_id");
+      const tokenId = searchParams.get("token_id");
 
-      try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const contract = await getNftContract(provider);
-        const claimed: number[] = [];
+      if (sessionId && tokenId && user?.email && !isProcessingPayment) {
+        setIsProcessingPayment(true);
+        setError(null);
+        try {
+          console.log("Processing Stripe payment:", { sessionId, tokenId });
 
-        for (const tokenId of purchasedNFTs) {
-          const prePurchaser = await contract.getPrePurchaser(tokenId);
-          if (prePurchaser === ethers.ZeroAddress) {
-            claimed.push(tokenId);
+          // 1. Verify the payment
+          const verificationResult = await verifyPayment(sessionId);
+          if (!verificationResult.success) {
+            throw new Error("Payment verification failed");
           }
-        }
 
-        setClaimedNFTs(claimed);
-      } catch (err) {
-        console.error("Error checking claimed status:", err);
+          if (!user.email) throw new Error("User email not found");
+
+          // 2. Update purchase data in Supabase
+          await updateNFTPurchaseStatus(user.email, Number(tokenId));
+
+          // 3. Show success message
+          setSuccess(
+            `Successfully purchased NFT #${tokenId}! Connect your wallet to claim it.`
+          );
+
+          // 4. Refresh the NFT status
+          await checkNFTStatus();
+        } catch (err) {
+          console.error("Error processing Stripe payment:", err);
+          setError(
+            "There was an error processing your payment. Please contact support if you were charged."
+          );
+        } finally {
+          setIsProcessingPayment(false);
+        }
       }
     };
-    checkClaimedStatus();
-  }, [isWalletConnected, purchasedNFTs]);
+
+    handleStripeRedirect();
+  }, [searchParams, user]);
 
   const handleClaim = async (tokenId: number) => {
     if (!isWalletConnected) {
       connectWallet();
+      return;
+    }
+
+    if (!user?.email || !walletAddress) {
+      setError("Please connect your wallet to claim NFTs");
       return;
     }
 
@@ -63,11 +161,20 @@ const MyNFTs = () => {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
+      // First mark as pre-purchased on contract if needed
+      await updateNFTPurchaseStatus(user.email, tokenId, walletAddress);
+
+      // Then claim the token
       const result = await claimToken(signer, tokenId);
 
       if (result.success) {
+        // Record the mint in database
+        await recordMintedNFT(user.email, walletAddress, tokenId);
+
         setSuccess(`Successfully claimed NFT #${tokenId}!`);
+        // Update the lists immediately
         setClaimedNFTs((prev) => [...prev, tokenId]);
+        setPurchasedNFTs((prev) => prev.filter((id) => id !== tokenId));
       } else {
         setError(result.error || "Failed to claim NFT");
       }
@@ -130,7 +237,16 @@ const MyNFTs = () => {
           </motion.div>
         )}
 
-        {purchasedNFTs.length === 0 ? (
+        {isLoading ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16"
+          >
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto"></div>
+            <p className="text-white/60 mt-4">Loading your NFTs...</p>
+          </motion.div>
+        ) : purchasedNFTs.length === 0 && claimedNFTs.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -155,9 +271,11 @@ const MyNFTs = () => {
             transition={{ duration: 0.6 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
-            {purchasedNFTs.map((tokenId, index) => (
+            {[...claimedNFTs, ...purchasedNFTs].map((tokenId, index) => (
               <motion.div
-                key={tokenId}
+                key={`${tokenId}-${
+                  claimedNFTs.includes(tokenId) ? "claimed" : "unclaimed"
+                }`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
