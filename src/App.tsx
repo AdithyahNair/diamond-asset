@@ -10,7 +10,7 @@ import Hero from "./components/sections/Hero";
 import Mission from "./components/sections/Mission";
 import TimelessTurtle from "./components/sections/TimelessTurtle";
 import Benefits from "./components/sections/Benefits";
-import NftBenefits from "./components/sections/NftBenefits";
+// import NftBenefits from "./components/sections/NftBenefits";
 import Footer from "./components/layout/Footer";
 import CollectionDetails from "./components/sections/CollectionDetails";
 import CollectionsList from "./components/sections/CollectionsList";
@@ -42,7 +42,7 @@ const AppLayout = () => {
               <Mission />
               <TimelessTurtle />
               <Benefits />
-              <NftBenefits />
+              {/* <NftBenefits /> */}
             </main>
           }
         />

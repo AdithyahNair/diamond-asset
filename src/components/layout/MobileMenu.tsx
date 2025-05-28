@@ -134,24 +134,15 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                     </button>
                   </>
                 ) : (
-                  <>
-                    <button
-                      onClick={() => {
-                        onAuthModalOpen();
-                        onClose();
-                      }}
-                      className="block w-full py-2 text-center text-white/80 hover:text-white transition-colors duration-300"
-                    >
-                      Login
-                    </button>
-                    <Link
-                      to="/my-nfts"
-                      onClick={onClose}
-                      className="block w-full py-2 text-center text-navy-900 bg-cyan-400 rounded-full hover:bg-cyan-500 transition-colors duration-300"
-                    >
-                      My NFTs
-                    </Link>
-                  </>
+                  <button
+                    onClick={() => {
+                      onAuthModalOpen();
+                      onClose();
+                    }}
+                    className="block w-full py-2 text-center text-white/80 hover:text-white transition-colors duration-300"
+                  >
+                    Login
+                  </button>
                 )}
               </div>
             </div>

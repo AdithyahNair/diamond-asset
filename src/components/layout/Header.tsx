@@ -142,20 +142,12 @@ const Header = () => {
                   </button>
                 </div>
               ) : (
-                <>
-                  <button
-                    onClick={() => setIsAuthModalOpen(true)}
-                    className="text-sm font-medium text-white/80 hover:text-white transition-colors duration-300"
-                  >
-                    Login
-                  </button>
-                  <Link
-                    to="/my-nfts"
-                    className="px-4 py-2 text-sm font-medium text-navy-900 bg-cyan-400 rounded-full hover:bg-cyan-500 transition-colors duration-300"
-                  >
-                    My NFTs
-                  </Link>
-                </>
+                <button
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="text-sm font-medium text-white/80 hover:text-white transition-colors duration-300"
+                >
+                  Login
+                </button>
               )}
             </div>
 
