@@ -645,20 +645,28 @@ const CollectionDetails: React.FC = () => {
                 {/* Action Buttons */}
                 <div className="flex gap-4">
                   {paymentMethod === "crypto" ? (
-                    <motion.button
-                      whileHover={{ y: -2 }}
-                      onClick={handleCryptoPayment}
-                      disabled={
-                        !isWalletConnected || isPurchasing || !selectedTokenId
-                      }
-                      className={`w-full py-3 px-6 rounded-xl font-medium transition-all ${
-                        !isWalletConnected || isPurchasing || !selectedTokenId
-                          ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
-                          : "bg-cyan-400 hover:bg-cyan-300 text-black"
-                      }`}
-                    >
-                      {isPurchasing ? "Processing..." : "Buy Now"}
-                    </motion.button>
+                    !isWalletConnected ? (
+                      <motion.button
+                        whileHover={{ y: -2 }}
+                        onClick={connectWallet}
+                        className="w-full py-3 px-6 rounded-xl font-medium bg-cyan-400 hover:bg-cyan-300 text-black"
+                      >
+                        Connect Wallet
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        whileHover={{ y: -2 }}
+                        onClick={handleCryptoPayment}
+                        disabled={isPurchasing || !selectedTokenId}
+                        className={`w-full py-3 px-6 rounded-xl font-medium transition-all ${
+                          isPurchasing || !selectedTokenId
+                            ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
+                            : "bg-cyan-400 hover:bg-cyan-300 text-black"
+                        }`}
+                      >
+                        {isPurchasing ? "Processing..." : "Buy Now"}
+                      </motion.button>
+                    )
                   ) : (
                     <motion.button
                       whileHover={{ y: -2 }}
