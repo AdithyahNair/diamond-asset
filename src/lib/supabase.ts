@@ -1,6 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import { ethers } from "ethers";
-import { getNftContract } from "./nftContract";
 
 // Get Supabase URL and anon key from environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -153,67 +151,52 @@ export const hasEmailMintedToken = async (email: string, tokenId: number) => {
   }
 };
 
-// Get NFTs purchased by a user
-export const getUserPurchasedNFTs = async (userEmail: string) => {
+// Update user's NFT purchase status
+export const updateNFTPurchaseStatus = async (
+  email: string,
+  tokenId: number
+) => {
   try {
-    console.log("Fetching NFTs for:", userEmail);
-
-    // 1. Get NFTs from user_profiles
-    const { data: profileData, error: profileError } = await supabase
+    // First get the current purchases array
+    const { data: profile, error: fetchError } = await supabase
       .from("user_profiles")
       .select("nft_purchases")
-      .eq("email", userEmail)
+      .eq("email", email)
       .single();
 
-    if (profileError) {
-      console.error("Error fetching from user_profiles:", profileError);
+    if (fetchError) throw fetchError;
+
+    // Add the new token ID to the purchases array
+    const currentPurchases = profile?.nft_purchases || [];
+    if (!currentPurchases.includes(tokenId)) {
+      const { error } = await supabase
+        .from("user_profiles")
+        .update({ nft_purchases: [...currentPurchases, tokenId] })
+        .eq("email", email);
+
+      if (error) throw error;
     }
 
-    // 2. Get NFTs from minted_nfts
-    const { data: mintedData, error: mintedError } = await supabase
-      .from("minted_nfts")
-      .select("token_id")
-      .eq("email", userEmail);
-
-    if (mintedError) {
-      console.error("Error fetching from minted_nfts:", mintedError);
-    }
-
-    // 3. Get NFTs from nft_purchases
-    const { data: purchaseData, error: purchaseError } = await supabase
-      .from("nft_purchases")
-      .select("token_id")
-      .eq("user_email", userEmail)
-      .eq("status", "completed");
-
-    if (purchaseError) {
-      console.error("Error fetching from nft_purchases:", purchaseError);
-    }
-
-    // Combine all sources
-    const profileNFTs = profileData?.nft_purchases || [];
-    const mintedNFTs = mintedData?.map((item) => item.token_id) || [];
-    const purchasedNFTs = purchaseData?.map((item) => item.token_id) || [];
-
-    // Convert all to numbers and remove duplicates
-    const allNFTs = [
-      ...new Set([
-        ...profileNFTs.map(Number),
-        ...mintedNFTs.map(Number),
-        ...purchasedNFTs.map(Number),
-      ]),
-    ];
-
-    console.log("Combined NFTs from all sources:", {
-      profileNFTs,
-      mintedNFTs,
-      purchasedNFTs,
-      allNFTs,
-    });
-
-    return allNFTs;
+    return { success: true };
   } catch (error) {
-    console.error("Error getting user purchased NFTs:", error);
+    console.error("Error updating NFT purchase status:", error);
+    return { success: false, error };
+  }
+};
+
+// Get all NFTs purchased by a user
+export const getUserPurchasedNFTs = async (email: string) => {
+  try {
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("nft_purchases")
+      .eq("email", email)
+      .single();
+
+    if (error) throw error;
+    return data?.nft_purchases || [];
+  } catch (error) {
+    console.error("Error getting user's purchased NFTs:", error);
     return [];
   }
 };
@@ -235,107 +218,57 @@ export const hasUserPurchasedNFT = async (email: string, tokenId: number) => {
   }
 };
 
-// Get available NFTs from Supabase - Using minted_nfts table to avoid RLS issues
-export const getAvailableNFTsFromSupabase = async (): Promise<{
+// Get available NFTs from Supabase - Using user_profiles table (RLS disabled)
+interface AvailableNFTsResponse {
   availableCount: number;
   availableTokens: number[];
-}> => {
-  try {
-    // Get all minted token IDs
-    const { data: mintedNFTs, error } = await supabase
-      .from("minted_nfts")
-      .select("token_id");
+}
 
-    if (error) {
-      console.error("Error fetching minted NFTs:", error);
-      throw error;
+export const getAvailableNFTsFromSupabase =
+  async (): Promise<AvailableNFTsResponse> => {
+    try {
+      // Get ALL profiles and their nft_purchases arrays
+      const { data: profiles, error } = await supabase
+        .from("user_profiles")
+        .select("nft_purchases, email");
+
+      if (error) {
+        console.error("Error fetching profiles:", error);
+        throw error;
+      }
+
+      console.log("All profiles data:", JSON.stringify(profiles, null, 2));
+      console.log("Number of profiles found:", profiles?.length || 0);
+
+      if (!profiles || profiles.length === 0) {
+        console.log("No profiles found");
+        return { availableCount: 8, availableTokens: [1, 2, 3, 4, 5, 6, 7, 8] }; // If no profiles, all NFTs are available
+      }
+
+      // Get all purchased token IDs across all users
+      const purchasedTokens = new Set<number>();
+      profiles.forEach((profile) => {
+        const purchases = profile.nft_purchases || [];
+        purchases.forEach((tokenId: number) => purchasedTokens.add(tokenId));
+      });
+
+      // Calculate available tokens (tokens 1-8 that are not in purchasedTokens)
+      const availableTokens: number[] = [];
+      for (let i = 1; i <= 8; i++) {
+        if (!purchasedTokens.has(i)) {
+          availableTokens.push(i);
+        }
+      }
+
+      console.log("Available tokens:", availableTokens);
+      return {
+        availableCount: availableTokens.length,
+        availableTokens,
+      };
+    } catch (error) {
+      console.error("Error getting available NFTs from Supabase:", error);
+      return { availableCount: 0, availableTokens: [] };
     }
-
-    // Extract the token IDs that are already minted
-    const mintedTokenIds = mintedNFTs.map((nft) => nft.token_id);
-    console.log("Minted token IDs:", mintedTokenIds);
-
-    // Generate all possible token IDs (1-8)
-    const allTokenIds = Array.from({ length: 8 }, (_, i) => i + 1);
-
-    // Filter out the minted tokens to get available ones
-    const availableTokens = allTokenIds.filter(
-      (id) => !mintedTokenIds.includes(id)
-    );
-    console.log("Available token IDs:", availableTokens);
-
-    return {
-      availableCount: availableTokens.length,
-      availableTokens,
-    };
-  } catch (error) {
-    console.error("Error getting available NFTs:", error);
-    return {
-      availableCount: 0,
-      availableTokens: [],
-    };
-  }
-};
-
-// Update NFT purchase status and mark as pre-purchased on the contract
-export const updateNFTPurchaseStatus = async (
-  userEmail: string,
-  tokenId: number,
-  walletAddress?: string
-) => {
-  try {
-    console.log("Updating purchase status for:", {
-      userEmail,
-      tokenId,
-      walletAddress,
-    });
-
-    // 1. Update purchase status in Supabase
-    const { data, error } = await supabase.from("nft_purchases").upsert(
-      {
-        user_email: userEmail,
-        token_id: tokenId,
-        status: "completed",
-        wallet_address: walletAddress || null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_email,token_id" }
-    );
-
-    if (error) {
-      console.error("Database error updating purchase:", error);
-      throw error;
-    }
-
-    console.log("Purchase status updated in database:", data);
-
-    // 2. Mark token as pre-purchased on the contract using contract owner's wallet
-    if (walletAddress) {
-      console.log("Marking token as pre-purchased on contract");
-
-      // Create a wallet using the contract owner's private key
-      const provider = new ethers.JsonRpcProvider(import.meta.env.VITE_RPC_URL);
-      const ownerWallet = new ethers.Wallet(
-        import.meta.env.VITE_CONTRACT_OWNER_KEY || "",
-        provider
-      );
-
-      // Get contract with owner's signer
-      const contract = await getNftContract(ownerWallet);
-
-      // Mark token as pre-purchased
-      const tx = await contract.markTokenAsPrePurchased(tokenId, walletAddress);
-      console.log("Transaction sent:", tx.hash);
-
-      const receipt = await tx.wait();
-      console.log("Transaction confirmed:", receipt);
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating NFT purchase status:", error);
-    throw error;
-  }
-};
+  };
 
 export default supabase;
