@@ -7,10 +7,10 @@ const Hero = () => {
   }, []);
 
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-black">
+    <section className="relative min-h-screen w-full overflow-hidden bg-black pt-20 md:pt-24">
       {/* Main Container */}
-      <div className="container mx-auto px-6 h-screen">
-        <div className="flex flex-col lg:flex-row h-full items-center">
+      <div className="container mx-auto px-6 min-h-screen flex items-center">
+        <div className="flex flex-col lg:flex-row w-full items-center">
           {/* Left Content */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
