@@ -218,4 +218,30 @@ export const hasUserPurchasedNFT = async (email: string, tokenId: number) => {
   }
 };
 
+// Get available NFTs from Supabase - Using minted_nfts table to avoid RLS issues
+export const getAvailableNFTsFromSupabase = async (): Promise<number> => {
+  try {
+    // Count total minted NFTs from the minted_nfts table
+    const { count, error } = await supabase
+      .from("minted_nfts")
+      .select("*", { count: "exact", head: true });
+
+    if (error) {
+      console.error("Error fetching mint count:", error);
+      throw error;
+    }
+
+    console.log("Total minted NFTs from minted_nfts table:", count);
+
+    // Available NFTs = Total NFTs (8) - Total minted NFTs
+    const availableCount = 8 - (count || 0);
+    console.log("Available NFT count:", availableCount);
+
+    return Math.max(0, availableCount);
+  } catch (error) {
+    console.error("Error getting available NFTs:", error);
+    return 0;
+  }
+};
+
 export default supabase;

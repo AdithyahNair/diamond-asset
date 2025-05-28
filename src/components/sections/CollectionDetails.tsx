@@ -23,6 +23,7 @@ import {
   hasUserPurchasedNFT,
   updateNFTPurchaseStatus,
   recordMintedNFT,
+  getAvailableNFTsFromSupabase,
 } from "../../lib/supabase";
 import { createCheckoutSession } from "../../lib/stripe";
 
@@ -51,6 +52,7 @@ const CollectionDetails: React.FC = () => {
     "crypto"
   );
   const [isProcessingCardPayment, setIsProcessingCardPayment] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     isFullyAuthenticated,
@@ -60,26 +62,106 @@ const CollectionDetails: React.FC = () => {
     connectWallet,
   } = useAuth();
 
-  const fetchAvailable = async () => {
+  const fetchAvailableFromContract = async () => {
     try {
+      if (!window.ethereum) return [];
       const provider = new ethers.BrowserProvider(window.ethereum);
       const availableTokens = await getAvailableNFTs(provider);
-      setAvailableTokens(availableTokens);
-      setAvailable(availableTokens.length);
+      return availableTokens;
+    } catch (error) {
+      console.error("Error fetching available NFTs from contract:", error);
+      return [];
+    }
+  };
 
-      // Select the first available token by default
-      if (availableTokens.length > 0 && !selectedTokenId) {
-        setSelectedTokenId(availableTokens[0]);
+  const fetchAvailableFromSupabase = async () => {
+    try {
+      const availableTokens = await getAvailableNFTsFromSupabase();
+      return availableTokens;
+    } catch (error) {
+      console.error("Error fetching available NFTs from Supabase:", error);
+      return [];
+    }
+  };
+
+  const fetchAvailable = async () => {
+    try {
+      setIsLoading(true);
+      let availableCount = 0;
+
+      console.log("Auth State:", {
+        isFullyAuthenticated,
+        hasUser: !!user,
+        userEmail: user?.email,
+        isWalletConnected,
+      });
+
+      // If we have a user (either email or wallet), try to get data
+      if (user?.email || isWalletConnected) {
+        // Try Supabase first if we have a user email
+        if (user?.email) {
+          console.log("Fetching from Supabase for user:", user.email);
+          availableCount = await getAvailableNFTsFromSupabase();
+          console.log("Available count from Supabase:", availableCount);
+        }
+
+        // If no count from Supabase and wallet is connected, try contract
+        if (availableCount === 0 && window.ethereum && isWalletConnected) {
+          console.log("Falling back to contract data");
+          const tokens = await fetchAvailableFromContract();
+          availableCount = tokens.length;
+          console.log("Available count from contract:", availableCount);
+        }
+
+        // Set the available count
+        setAvailable(availableCount);
+
+        // Generate sequential token IDs for the dropdown
+        const tokenIds = Array.from(
+          { length: availableCount },
+          (_, i) => i + 1
+        );
+        setAvailableTokens(tokenIds);
+
+        if (!selectedTokenId && availableCount > 0) {
+          setSelectedTokenId(tokenIds[0]);
+        }
+        setError(null);
+      } else {
+        console.log("No auth - prompting user to connect");
+        setAvailable(0);
+        setAvailableTokens([]);
+        setSelectedTokenId(null);
+        setError("Please login or connect wallet to view available NFTs");
       }
     } catch (error) {
       console.error("Error fetching available NFTs:", error);
       setError("Failed to fetch available NFTs");
+      setAvailable(0);
+      setAvailableTokens([]);
+      setSelectedTokenId(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Reset state when user signs out
   useEffect(() => {
-    fetchAvailable();
-  }, []);
+    if (!user?.email && !isWalletConnected) {
+      setAvailable(0);
+      setAvailableTokens([]);
+      setSelectedTokenId(null);
+      setError("Please login or connect wallet to view available NFTs");
+      setIsLoading(false);
+    }
+  }, [user?.email, isWalletConnected]);
+
+  // Fetch available NFTs when component mounts or auth state changes
+  useEffect(() => {
+    if (user?.email || isWalletConnected) {
+      fetchAvailable();
+    }
+  }, [user?.email, isWalletConnected]);
 
   const loadAccounts = async () => {
     try {
@@ -419,16 +501,26 @@ const CollectionDetails: React.FC = () => {
                   <div className="text-right">
                     <div className="text-white/60 text-sm mb-1">Available</div>
                     <div className="text-xl font-serif text-white flex items-center justify-end">
-                      {available} NFTs
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={handleRefreshCount}
-                        className="ml-2 p-1 rounded-full hover:bg-cyan-400/10 text-cyan-400"
-                        title="Refresh NFT count"
-                      >
-                        <RefreshCw size={16} />
-                      </motion.button>
+                      {isLoading && (user?.email || isWalletConnected) ? (
+                        <span>Loading...</span>
+                      ) : available > 0 ? (
+                        <div className="flex items-center">
+                          {available} NFTs
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={handleRefreshCount}
+                            className="ml-2 p-1 rounded-full hover:bg-cyan-400/10 text-cyan-400"
+                            title="Refresh NFT count"
+                          >
+                            <RefreshCw size={16} />
+                          </motion.button>
+                        </div>
+                      ) : (
+                        <span className="text-white/60">
+                          Login or connect wallet to view
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
