@@ -16,7 +16,7 @@ const TimelessTurtle = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative py-12 md:py-16 bg-black overflow-hidden"
+      className="relative py-4 md:py-6 bg-black overflow-hidden"
     >
       {/* Background decorative elements */}
       <div className="absolute inset-0">
@@ -28,7 +28,7 @@ const TimelessTurtle = () => {
           {/* Video Column */}
           <motion.div
             ref={imageRef}
-            className="relative order-2 lg:order-1"
+            className="relative order-2 lg:order-1 -mt-24"
             style={{ y: imageY }}
             initial={{ opacity: 0, x: -50 }}
             animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}

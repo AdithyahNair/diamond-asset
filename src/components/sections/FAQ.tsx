@@ -54,12 +54,12 @@ const FAQ = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <section className="relative bg-black overflow-hidden py-24">
+    <section className="relative bg-black overflow-hidden py-8 md:py-12">
       <div className="container mx-auto px-6">
         <div className="max-w-4xl mx-auto">
           {/* Section Title */}
-          <div className="text-left mb-12">
-            <h2 className="font-serif text-4xl text-white mb-4">FAQs</h2>
+          <div className="text-left mb-6">
+            <h2 className="font-serif text-4xl text-white mb-2">FAQs</h2>
             <p className="text-xl text-white/60">
               Frequently Asked Questions About the Timeless Experience
               Membership NFT

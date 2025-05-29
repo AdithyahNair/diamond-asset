@@ -12,14 +12,17 @@ const Mission = () => {
   };
 
   return (
-    <section className="relative py-24 md:py-32 bg-gradient-to-b from-black to-black overflow-hidden">
+    <section
+      ref={ref}
+      className="relative py-8 md:py-12 bg-black overflow-hidden"
+    >
       {/* Decorative elements */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-0 left-0 w-96 h-96 bg-cyan-400 rounded-full blur-[128px] -translate-x-1/2 -translate-y-1/2" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-cyan-400 rounded-full blur-[128px] translate-x-1/2 translate-y-1/2" />
       </div>
 
-      <div className="relative container mx-auto px-6 max-w-4xl" ref={ref}>
+      <div className="relative container mx-auto px-6 max-w-4xl">
         <motion.div
           className="text-center space-y-12"
           initial="hidden"

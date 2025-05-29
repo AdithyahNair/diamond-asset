@@ -138,7 +138,7 @@ const Benefits = () => {
   ];
 
   return (
-    <section className="relative py-24 md:py-32 bg-black overflow-hidden">
+    <section className="relative py-8 md:py-12 bg-black overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-radial from-cyan-400/5 to-transparent opacity-30" />
@@ -152,12 +152,12 @@ const Benefits = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-8"
         >
-          <h2 className="font-serif text-4xl md:text-5xl text-white mb-6">
+          <h2 className="font-serif text-4xl md:text-5xl text-white mb-3">
             As a founding member, you have access to:
           </h2>
-          <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mb-16" />
+          <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mb-8" />
 
           {/* Decorative corner elements */}
           <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-cyan-400/30" />
