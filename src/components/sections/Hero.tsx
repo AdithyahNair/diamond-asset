@@ -8,9 +8,9 @@ const Hero = () => {
   }, []);
 
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-black pt-6 md:pt-8">
+    <section className="relative min-h-screen w-full overflow-hidden bg-black pt-20 sm:pt-6 md:pt-8">
       {/* Main Container */}
-      <div className="container mx-auto px-6 min-h-screen flex items-center">
+      <div className="container mx-auto px-4 sm:px-6 min-h-screen flex items-center">
         <div className="flex flex-col lg:flex-row w-full items-center">
           {/* Left Content */}
           <motion.div
