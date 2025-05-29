@@ -26,8 +26,9 @@ const Hero = () => {
               Where luxury meets legacy
             </h2>
             <p className="text-lg md:text-xl text-white/80 mb-6 max-w-2xl mx-auto lg:mx-0 font-light leading-relaxed">
-              Join us on the journey to collect and curate our planets most
-              historically desired artefacts.
+              Join an elite group of collectors and insiders. Get first-look
+              access, private diamond viewings, and voting rights - all through
+              one secure, digital pass.
             </p>
             <Link to="/collections">
               <motion.button
@@ -35,7 +36,7 @@ const Hero = () => {
                 whileTap={{ scale: 0.95 }}
                 className="px-8 py-3 bg-cyan-400 text-navy-900 text-lg font-medium rounded-full hover:bg-cyan-500 transition-colors duration-300"
               >
-                Get My Membership
+                Become a member
               </motion.button>
             </Link>
           </motion.div>

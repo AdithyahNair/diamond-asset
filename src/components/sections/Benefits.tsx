@@ -113,7 +113,7 @@ const Benefits = () => {
   const benefits: BenefitItem[] = [
     {
       icon: CoCreateIcon,
-      title: "Co-create the timeless turtle",
+      title: "Co-create",
       benefits: [
         "Collaborate in the creation of the timeless turtle, a one of a kind jewelry piece made by renowned jewelry designer Jean Paul Xavier",
         "Shape its story through motifs etched on its shell and body for eternity & vote on naming the creation",

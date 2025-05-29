@@ -28,14 +28,6 @@ const Mission = () => {
             visible: { transition: { staggerChildren: 0.2 } },
           }}
         >
-          {/* Title */}
-          <motion.h2
-            variants={fadeUpVariants}
-            className="font-serif text-4xl md:text-5xl lg:text-6xl text-white mb-16"
-          >
-            The Timeless Experience
-          </motion.h2>
-
           {/* Main content */}
           <motion.div
             variants={fadeUpVariants}

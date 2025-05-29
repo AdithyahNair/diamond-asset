@@ -18,6 +18,7 @@ import MyNFTs from "./components/sections/MyNFTs";
 // import CartSidebar from "./components/cart/CartSidebar";
 import { AuthProvider } from "./contexts/AuthContext";
 // import { CartProvider } from "./contexts/CartContext";
+import FAQ from "./components/sections/FAQ";
 
 // Component to handle layout and footer visibility
 const AppLayout = () => {
@@ -43,6 +44,7 @@ const AppLayout = () => {
               <TimelessTurtle />
               <Benefits />
               {/* <NftBenefits /> */}
+              <FAQ />
             </main>
           }
         />
