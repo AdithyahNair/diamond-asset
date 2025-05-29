@@ -469,11 +469,9 @@ const CollectionDetails: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <div className="mb-8">
-                <div className="text-cyan-400 text-sm mb-2">
-                  Turtle Timepiece
-                </div>
+                <div className="text-cyan-400 text-sm mb-2">Membership NFT</div>
                 <h1 className="text-4xl font-serif text-white mb-4">
-                  Turtle Timepiece Genesis
+                  Timeless Experience
                 </h1>
                 <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
               </div>
@@ -504,13 +502,13 @@ const CollectionDetails: React.FC = () => {
                         <span>Loading...</span>
                       ) : available > 0 ? (
                         <div className="flex items-center">
-                          {available} NFTs
+                          {available} remaining
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={handleRefreshCount}
                             className="ml-2 p-1 rounded-full hover:bg-cyan-400/10 text-cyan-400"
-                            title="Refresh NFT count"
+                            title="Refresh count"
                           >
                             <RefreshCw size={16} />
                           </motion.button>
@@ -527,8 +525,8 @@ const CollectionDetails: React.FC = () => {
                 <div className="mb-6">
                   <div className="p-4 bg-cyan-400/10 border border-cyan-400/20 rounded-xl text-white/80">
                     <p>
-                      You can purchase multiple NFTs, one at a time. Each NFT
-                      costs {ETH_PRICE_USD} ETH (${USD_PRICE})
+                      Secure your membership in the Timeless Experience. Each
+                      membership costs {ETH_PRICE_USD} ETH (${USD_PRICE})
                     </p>
                   </div>
                 </div>
@@ -579,7 +577,7 @@ const CollectionDetails: React.FC = () => {
 
                 {available <= 0 && (
                   <div className="mb-4 p-4 bg-white/5 border border-white/10 rounded-xl text-white/60 text-sm">
-                    All NFTs have been sold
+                    All memberships have been claimed
                   </div>
                 )}
 
@@ -614,31 +612,10 @@ const CollectionDetails: React.FC = () => {
                     {paymentMethod === "crypto"
                       ? !isWalletConnected
                         ? "You'll need to connect your wallet to pay with ETH."
-                        : "Pay with ETH. NFT will be transferred immediately."
-                      : "Pay with credit/debit card. Connect wallet later to claim your NFT."}
+                        : "Pay with ETH. Your membership NFT will be transferred immediately."
+                      : "Pay with credit/debit card. Connect wallet later to claim your membership NFT."}
                   </div>
                 </div>
-
-                {/* NFT Selection */}
-                {available > 0 && (
-                  <div className="mb-6">
-                    <label className="block text-white mb-2">Select NFT:</label>
-                    <select
-                      className="w-full p-3 rounded-xl bg-black/60 text-white border border-cyan-400/20 focus:border-cyan-400 focus:outline-none transition-colors"
-                      value={selectedTokenId || ""}
-                      onChange={(e) =>
-                        setSelectedTokenId(Number(e.target.value))
-                      }
-                    >
-                      <option value="">Select an NFT</option>
-                      {availableTokens.map((tokenId) => (
-                        <option key={tokenId} value={tokenId}>
-                          Turtle Timepiece #{tokenId}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
 
                 {/* Action Buttons */}
                 <div className="flex gap-4">
@@ -654,10 +631,16 @@ const CollectionDetails: React.FC = () => {
                     ) : (
                       <motion.button
                         whileHover={{ y: -2 }}
-                        onClick={handleCryptoPayment}
-                        disabled={isPurchasing || !selectedTokenId}
+                        onClick={() => {
+                          // Automatically select the first available token
+                          if (availableTokens.length > 0) {
+                            setSelectedTokenId(availableTokens[0]);
+                            handleCryptoPayment();
+                          }
+                        }}
+                        disabled={isPurchasing || available <= 0}
                         className={`w-full py-3 px-6 rounded-xl font-medium transition-all ${
-                          isPurchasing || !selectedTokenId
+                          isPurchasing || available <= 0
                             ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
                             : "bg-cyan-400 hover:bg-cyan-300 text-black"
                         }`}
@@ -668,10 +651,16 @@ const CollectionDetails: React.FC = () => {
                   ) : (
                     <motion.button
                       whileHover={{ y: -2 }}
-                      onClick={handleCardPayment}
-                      disabled={isProcessingCardPayment || !selectedTokenId}
+                      onClick={() => {
+                        // Automatically select the first available token
+                        if (availableTokens.length > 0) {
+                          setSelectedTokenId(availableTokens[0]);
+                          handleCardPayment();
+                        }
+                      }}
+                      disabled={isProcessingCardPayment || available <= 0}
                       className={`w-full py-3 px-6 rounded-xl font-medium transition-all ${
-                        isProcessingCardPayment || !selectedTokenId
+                        isProcessingCardPayment || available <= 0
                           ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
                           : "bg-cyan-400 hover:bg-cyan-300 text-black"
                       }`}
