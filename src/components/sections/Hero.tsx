@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   useEffect(() => {
@@ -28,13 +29,15 @@ const Hero = () => {
               Join us on the journey to collect and curate our planets most
               historically desired artefacts.
             </p>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-8 py-3 bg-cyan-400 text-navy-900 text-lg font-medium rounded-full hover:bg-cyan-500 transition-colors duration-300"
-            >
-              Get My Membership
-            </motion.button>
+            <Link to="/collections">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-8 py-3 bg-cyan-400 text-navy-900 text-lg font-medium rounded-full hover:bg-cyan-500 transition-colors duration-300"
+              >
+                Get My Membership
+              </motion.button>
+            </Link>
           </motion.div>
 
           {/* Right Video */}

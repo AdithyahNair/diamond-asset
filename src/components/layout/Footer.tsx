@@ -70,9 +70,15 @@ const Footer = () => {
               Be part of a community that understands and appreciates the true
               value of timeless assets.
             </p>
-            <button className="bg-cyan-400 text-navy-900 px-8 py-4 rounded-full text-lg font-medium hover:bg-cyan-500 transition-colors duration-300">
-              Become a Member
-            </button>
+            <Link to="/collections">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-cyan-400 text-navy-900 px-8 py-4 rounded-full text-lg font-medium hover:bg-cyan-500 transition-colors duration-300"
+              >
+                Become a Member
+              </motion.button>
+            </Link>
           </motion.div>
         </div>
       </div>
