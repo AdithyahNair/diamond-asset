@@ -259,7 +259,9 @@ const MyNFTs = () => {
             <motion.button
               whileHover={{ y: -2 }}
               className="mt-6 px-8 py-3 bg-cyan-400 text-black rounded-xl font-medium hover:bg-cyan-300 transition-colors"
-              onClick={() => (window.location.href = "/collections")}
+              onClick={() =>
+                (window.location.href = "/collection/turtle-timepiece-genesis")
+              }
             >
               Browse Collections
             </motion.button>
