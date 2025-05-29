@@ -76,7 +76,9 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navItems = [{ label: "Collections", path: "/collections" }];
+  const navItems = [
+    { label: "Membership", path: "/collection/turtle-timepiece-genesis" },
+  ];
 
   return (
     <>

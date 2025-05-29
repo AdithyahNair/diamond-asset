@@ -13,7 +13,6 @@ import Benefits from "./components/sections/Benefits";
 // import NftBenefits from "./components/sections/NftBenefits";
 import Footer from "./components/layout/Footer";
 import CollectionDetails from "./components/sections/CollectionDetails";
-import CollectionsList from "./components/sections/CollectionsList";
 import MyNFTs from "./components/sections/MyNFTs";
 // import CartSidebar from "./components/cart/CartSidebar";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -25,7 +24,7 @@ const AppLayout = () => {
   const location = useLocation();
 
   // List of paths where footer should not be shown
-  const noFooterPaths = ["/my-nfts", "/collections"];
+  const noFooterPaths = ["/my-nfts", "/collection/turtle-timepiece-genesis"];
 
   const shouldShowFooter =
     !noFooterPaths.includes(location.pathname) &&
@@ -48,7 +47,6 @@ const AppLayout = () => {
             </main>
           }
         />
-        <Route path="/collections" element={<CollectionsList />} />
         <Route path="/collection/:id" element={<CollectionDetails />} />
         <Route path="/my-nfts" element={<MyNFTs />} />
       </Routes>

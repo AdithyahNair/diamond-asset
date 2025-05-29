@@ -48,9 +48,7 @@ const CollectionDetails: React.FC = () => {
   const [availableAccounts, setAvailableAccounts] = useState<string[]>([]);
   const [isAccountSelectionOpen, setIsAccountSelectionOpen] = useState(false);
   const [networkName, setNetworkName] = useState<string>("Unknown");
-  const [paymentMethod, setPaymentMethod] = useState<"crypto" | "card">(
-    "crypto"
-  );
+  const [paymentMethod, setPaymentMethod] = useState<"crypto" | "card">("card");
   const [isProcessingCardPayment, setIsProcessingCardPayment] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -396,7 +394,7 @@ const CollectionDetails: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-black pt-32 pb-16">
+      <div className="min-h-screen bg-black pt-24 pb-16">
         <div className="container mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -404,11 +402,11 @@ const CollectionDetails: React.FC = () => {
             transition={{ duration: 0.6 }}
           >
             <Link
-              to="/collections"
+              to="/"
               className="inline-flex items-center text-white/60 hover:text-cyan-400 mb-8 transition-colors"
             >
               <ArrowLeft size={20} className="mr-2" />
-              Back to collections
+              Back to Home
             </Link>
           </motion.div>
 
@@ -590,17 +588,6 @@ const CollectionDetails: React.FC = () => {
                   <div className="flex gap-4 mb-4">
                     <motion.button
                       whileHover={{ y: -2 }}
-                      onClick={() => setPaymentMethod("crypto")}
-                      className={`flex-1 py-3 px-6 rounded-xl transition-colors ${
-                        paymentMethod === "crypto"
-                          ? "bg-cyan-400 text-black"
-                          : "bg-black/60 text-white/60 border border-cyan-400/20"
-                      }`}
-                    >
-                      Pay with Crypto
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ y: -2 }}
                       onClick={() => setPaymentMethod("card")}
                       className={`flex-1 py-3 px-6 rounded-xl transition-colors ${
                         paymentMethod === "card"
@@ -609,6 +596,17 @@ const CollectionDetails: React.FC = () => {
                       }`}
                     >
                       Pay with Card
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ y: -2 }}
+                      onClick={() => setPaymentMethod("crypto")}
+                      className={`flex-1 py-3 px-6 rounded-xl transition-colors ${
+                        paymentMethod === "crypto"
+                          ? "bg-cyan-400 text-black"
+                          : "bg-black/60 text-white/60 border border-cyan-400/20"
+                      }`}
+                    >
+                      Pay with Crypto
                     </motion.button>
                   </div>
 

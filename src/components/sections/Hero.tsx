@@ -30,7 +30,7 @@ const Hero = () => {
               access, private diamond viewings, and voting rights - all through
               one secure, digital pass.
             </p>
-            <Link to="/collections">
+            <Link to="/collection/turtle-timepiece-genesis">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
