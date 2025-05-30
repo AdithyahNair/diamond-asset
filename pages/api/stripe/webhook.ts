@@ -1,11 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import Stripe from "stripe";
 import { buffer } from "micro";
-import {
-  stripe,
-  allowedEvents,
-  syncPurchaseDataToKV,
-} from "../../../src/lib/stripe";
+import { stripe, allowedEvents } from "../../../src/lib/stripe";
+import { handleStripeWebhook } from "../../../src/api/stripe-webhook";
 
 // Disable body parsing, need the raw body for webhook signature verification
 export const config = {
@@ -50,19 +47,8 @@ export default async function handler(
   }
 
   try {
-    const { customer: customerId } = event.data.object as {
-      customer: string;
-    };
-
-    if (typeof customerId !== "string") {
-      throw new Error(
-        `[STRIPE HOOK] Customer ID isn't string.\nEvent type: ${event.type}`
-      );
-    }
-
-    // Process the event asynchronously
-    await syncPurchaseDataToKV(customerId);
-
+    // Handle the webhook event
+    await handleStripeWebhook(event);
     return res.json({ received: true });
   } catch (error: any) {
     console.error("[STRIPE HOOK] Error processing event:", error);

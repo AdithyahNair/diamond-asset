@@ -1,5 +1,6 @@
 import { ethers, Contract, Provider, Signer } from "ethers";
 import contractInfo from "../../contract-info.json";
+import { supabase } from "../lib/supabase";
 
 // The address of our deployed contract
 export const NFT_CONTRACT_ADDRESS = contractInfo.address;
@@ -425,6 +426,103 @@ export const markTokenAsPrePurchased = async (
       errorMessage = "This NFT has already been pre-purchased";
     }
 
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+};
+
+// Claim a Stripe-purchased NFT
+export const claimStripePurchasedNFT = async (
+  signer: Signer,
+  tokenId: number,
+  email: string
+) => {
+  try {
+    const contract = await getNftContract(signer);
+    const signerAddress = await signer.getAddress();
+
+    // Check if contract is paused
+    const paused = await contract.paused();
+    if (paused) {
+      throw new Error(
+        "Contract is currently paused. Claims are not available."
+      );
+    }
+
+    // First verify the purchase in Supabase
+    const { data: purchaseData } = await supabase
+      .from("nft_purchases")
+      .select("*")
+      .eq("user_email", email)
+      .eq("token_id", tokenId)
+      .eq("status", "completed")
+      .single();
+
+    if (!purchaseData) {
+      throw new Error("No valid purchase found for this NFT");
+    }
+
+    // Check if the token is already pre-purchased for this address
+    const prePurchaser = await contract.getPrePurchaser(tokenId);
+
+    // If not pre-purchased for anyone, mark it for this address
+    if (prePurchaser === ethers.ZeroAddress) {
+      try {
+        const ownerSigner = new ethers.Wallet(
+          import.meta.env.VITE_PRIVATE_KEY,
+          signer.provider
+        );
+        const ownerContract = new ethers.Contract(
+          NFT_CONTRACT_ADDRESS,
+          NFT_CONTRACT_ABI,
+          ownerSigner
+        );
+        const tx = await ownerContract.markTokenAsPrePurchased(
+          tokenId,
+          signerAddress
+        );
+        await tx.wait();
+        console.log(
+          `Token ${tokenId} marked as pre-purchased for ${signerAddress}`
+        );
+      } catch (error) {
+        console.error("Error marking token as pre-purchased:", error);
+        throw new Error(
+          "Failed to mark token as pre-purchased. Please try again."
+        );
+      }
+    }
+    // If pre-purchased for a different address, throw error
+    else if (prePurchaser.toLowerCase() !== signerAddress.toLowerCase()) {
+      throw new Error(
+        "This NFT is pre-purchased for a different wallet address. Please use the correct wallet."
+      );
+    }
+
+    // Now try to claim the token
+    const tx = await contract.claimToken(tokenId);
+    await tx.wait();
+
+    return {
+      success: true,
+      transaction: tx,
+      hash: tx.hash,
+    };
+  } catch (error) {
+    console.error("Error claiming Stripe-purchased NFT:", error);
+    let errorMessage = "Failed to claim NFT";
+    if ((error as Error).message.includes("No valid purchase found")) {
+      errorMessage = "No valid purchase found for this NFT";
+    } else if ((error as Error).message.includes("different wallet address")) {
+      errorMessage = (error as Error).message;
+    } else if ((error as Error).message.includes("Failed to mark token")) {
+      errorMessage = (error as Error).message;
+    } else if ((error as Error).message.includes("execution reverted")) {
+      errorMessage =
+        "Transaction failed. Please make sure this NFT is available for claiming.";
+    }
     return {
       success: false,
       error: errorMessage,

@@ -4,13 +4,18 @@ import {
   getUserPurchasedNFTs,
   updateNFTPurchaseStatus,
 } from "../../lib/supabase";
-import { getNftContract, claimToken } from "../../lib/nftContract";
+import {
+  getNftContract,
+  claimToken,
+  claimStripePurchasedNFT,
+} from "../../lib/nftContract";
 import { verifyPayment } from "../../lib/stripe";
 import { ethers } from "ethers";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "../../lib/supabase";
 import { recordMintedNFT } from "../../lib/supabase";
+import { markTokenAsPrePurchased } from "../../api/mark-token-prepurchased";
 
 const MyNFTs = () => {
   const { user, isWalletConnected, connectWallet, walletAddress } = useAuth();
@@ -29,24 +34,24 @@ const MyNFTs = () => {
 
     console.log("Checking NFT status for:", user.email);
     try {
-      // 1. Get all NFTs from user_profiles (these are all purchased NFTs)
-      const { data: profileData, error: profileError } = await supabase
-        .from("user_profiles")
-        .select("nft_purchases")
-        .eq("email", user.email)
-        .single();
+      // 1. Get all NFTs from nft_purchases table (Stripe purchases)
+      const { data: purchaseData, error: purchaseError } = await supabase
+        .from("nft_purchases")
+        .select("token_id")
+        .eq("user_email", user.email)
+        .eq("status", "completed");
 
-      if (profileError) {
-        throw profileError;
+      if (purchaseError) {
+        throw purchaseError;
       }
 
-      // Remove duplicates from nft_purchases array and ensure numbers
-      const allPurchasedNFTs = [
-        ...new Set(profileData?.nft_purchases || []),
-      ].map(Number);
-      console.log("All purchased NFTs (deduplicated):", allPurchasedNFTs);
+      // Get unique token IDs from Stripe purchases
+      const stripePurchasedNFTs = [
+        ...new Set(purchaseData?.map((p) => p.token_id) || []),
+      ];
+      console.log("Stripe purchased NFTs:", stripePurchasedNFTs);
 
-      // 2. Get minted NFTs (these are claimed)
+      // 2. Get all minted NFTs (both claimed Stripe purchases and direct crypto purchases)
       const { data: mintedData, error: mintedError } = await supabase
         .from("minted_nfts")
         .select("token_id")
@@ -56,31 +61,22 @@ const MyNFTs = () => {
         throw mintedError;
       }
 
-      const mintedNFTs = [...new Set(mintedData.map((item) => item.token_id))];
-      console.log("Minted (claimed) NFTs:", mintedNFTs);
+      const mintedNFTs = [
+        ...new Set(mintedData?.map((item) => item.token_id) || []),
+      ];
+      console.log("All minted NFTs:", mintedNFTs);
 
-      // 3. Separate into claimed and unclaimed (all values are numbers now)
-      const claimed = allPurchasedNFTs.filter((id) => mintedNFTs.includes(id));
-      const unclaimed = allPurchasedNFTs.filter(
+      // 3. Separate into claimed and unclaimed
+      // - Claimed NFTs are all NFTs in minted_nfts
+      // - Unclaimed NFTs are Stripe purchases that haven't been minted yet
+      const claimed = mintedNFTs;
+      const unclaimed = stripePurchasedNFTs.filter(
         (id) => !mintedNFTs.includes(id)
       );
 
       console.log("Final status:", { claimed, unclaimed });
       setClaimedNFTs(claimed);
       setPurchasedNFTs(unclaimed);
-
-      // 4. Clean up duplicates in database if found
-      if (allPurchasedNFTs.length !== profileData?.nft_purchases?.length) {
-        console.log("Found duplicates, cleaning up database...");
-        const { error: updateError } = await supabase
-          .from("user_profiles")
-          .update({ nft_purchases: allPurchasedNFTs })
-          .eq("email", user.email);
-
-        if (updateError) {
-          console.error("Error cleaning up duplicates:", updateError);
-        }
-      }
     } catch (err) {
       console.error("Error checking NFT status:", err);
       setError("Failed to load your NFTs. Please try refreshing the page.");
@@ -161,11 +157,52 @@ const MyNFTs = () => {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
-      // First mark as pre-purchased on contract if needed
-      await updateNFTPurchaseStatus(user.email, tokenId, walletAddress);
+      // First check if the token is already marked as pre-purchased for this wallet
+      const contract = await getNftContract(provider);
+      const prePurchaser = await contract.getPrePurchaser(tokenId);
 
-      // Then claim the token
-      const result = await claimToken(signer, tokenId);
+      if (prePurchaser === ethers.ZeroAddress) {
+        // Token not marked as pre-purchased yet, let's mark it
+        // Update the user's wallet address in Supabase
+        const { data: userData, error: userError } = await supabase
+          .from("user_profiles")
+          .select("wallet_address")
+          .eq("email", user.email)
+          .single();
+
+        if (userError) {
+          throw new Error("Failed to fetch user profile");
+        }
+
+        // Only update if the wallet address has changed or is not set
+        if (
+          !userData?.wallet_address ||
+          userData.wallet_address.toLowerCase() !== walletAddress.toLowerCase()
+        ) {
+          const { error: updateError } = await supabase
+            .from("user_profiles")
+            .update({ wallet_address: walletAddress })
+            .eq("email", user.email);
+
+          if (updateError) {
+            throw new Error("Failed to update wallet address");
+          }
+        }
+
+        try {
+          await markTokenAsPrePurchased(tokenId, user.email, walletAddress);
+          // Show a message that we're waiting for the token to be marked
+          setSuccess(
+            "Your wallet has been registered. Please wait a few minutes for the token to be marked as pre-purchased, then try claiming again."
+          );
+          return;
+        } catch (error) {
+          throw new Error("Failed to mark token as pre-purchased");
+        }
+      }
+
+      // Now try to claim the token
+      const result = await claimStripePurchasedNFT(signer, tokenId, user.email);
 
       if (result.success) {
         // Record the mint in database
@@ -180,7 +217,15 @@ const MyNFTs = () => {
       }
     } catch (err) {
       console.error("Error claiming NFT:", err);
-      setError("Failed to claim NFT. Please try again.");
+      setError(
+        (err as Error).message === "Failed to fetch user profile"
+          ? "Failed to fetch your profile. Please try again."
+          : (err as Error).message === "Failed to update wallet address"
+          ? "Failed to update your wallet address. Please try again."
+          : (err as Error).message === "Failed to mark token as pre-purchased"
+          ? "Failed to register your wallet. Please try again in a few minutes."
+          : "Failed to claim NFT. Please try again."
+      );
     } finally {
       setIsClaiming((prev) => ({ ...prev, [tokenId]: false }));
     }

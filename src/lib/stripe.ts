@@ -254,33 +254,6 @@ export const verifyPayment = async (sessionId: string) => {
       throw purchaseError;
     }
 
-    // Also update the user_profiles table
-    const { data: profileData, error: profileError } = await supabase
-      .from("user_profiles")
-      .select("nft_purchases")
-      .eq("email", userEmail)
-      .single();
-
-    if (profileError) {
-      console.error("Error fetching user profile:", profileError);
-      throw profileError;
-    }
-
-    const currentPurchases = profileData?.nft_purchases || [];
-    if (!currentPurchases.includes(tokenId)) {
-      const { error: updateError } = await supabase
-        .from("user_profiles")
-        .update({
-          nft_purchases: [...currentPurchases, tokenId],
-        })
-        .eq("email", userEmail);
-
-      if (updateError) {
-        console.error("Error updating user profile:", updateError);
-        throw updateError;
-      }
-    }
-
     return { success: true };
   } catch (error) {
     console.error("Error verifying payment:", error);
