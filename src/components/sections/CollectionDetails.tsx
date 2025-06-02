@@ -131,7 +131,7 @@ const CollectionDetails: React.FC = () => {
         setAvailable(0);
         setAvailableTokens([]);
         setSelectedTokenId(null);
-        setError("Please login or connect wallet to view available NFTs");
+        setError("Please login to view available NFTs");
       }
     } catch (error) {
       console.error("Error fetching available NFTs:", error);
@@ -425,7 +425,7 @@ const CollectionDetails: React.FC = () => {
                   muted
                   playsInline
                 >
-                  <source src="/videos/nft-video.mp4" type="video/mp4" />
+                  <source src="/videos/nft-video-5sec.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </div>
@@ -469,9 +469,8 @@ const CollectionDetails: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <div className="mb-8">
-                <div className="text-cyan-400 text-sm mb-2">Membership NFT</div>
                 <h1 className="text-4xl font-serif text-white mb-4">
-                  Timeless Experience
+                  The Timeless Experience: Early Bird
                 </h1>
                 <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
               </div>
@@ -489,10 +488,7 @@ const CollectionDetails: React.FC = () => {
                       Current Price
                     </div>
                     <div className="text-2xl font-serif text-white">
-                      {ETH_PRICE_USD} ETH{" "}
-                      <span className="text-white/60 text-lg">
-                        (${USD_PRICE})
-                      </span>
+                      ${USD_PRICE}
                     </div>
                   </div>
                   <div className="text-right">
@@ -514,9 +510,7 @@ const CollectionDetails: React.FC = () => {
                           </motion.button>
                         </div>
                       ) : (
-                        <span className="text-white/60">
-                          Login or connect wallet to view
-                        </span>
+                        <span className="text-white/60">Login to view</span>
                       )}
                     </div>
                   </div>
@@ -525,22 +519,13 @@ const CollectionDetails: React.FC = () => {
                 <div className="mb-6">
                   <div className="p-4 bg-cyan-400/10 border border-cyan-400/20 rounded-xl text-white/80">
                     <p>
-                      Secure your membership in the Timeless Experience. Each
-                      membership costs {ETH_PRICE_USD} ETH (${USD_PRICE})
+                      An exclusive membership that offers curated access to rare
+                      diamond investment opportunities, immersive luxury
+                      experiences, and a backstage pass to the creation of a
+                      couture jewelry piece
                     </p>
                   </div>
                 </div>
-
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center"
-                  >
-                    <AlertCircle size={16} className="mr-2 flex-shrink-0" />
-                    {error}
-                  </motion.div>
-                )}
 
                 {successMessage && (
                   <motion.div
@@ -572,12 +557,6 @@ const CollectionDetails: React.FC = () => {
                 {paymentMethod === "crypto" && user && !isWalletConnected && (
                   <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-400 text-sm">
                     Please connect your wallet to purchase with crypto
-                  </div>
-                )}
-
-                {available <= 0 && (
-                  <div className="mb-4 p-4 bg-white/5 border border-white/10 rounded-xl text-white/60 text-sm">
-                    All memberships have been claimed
                   </div>
                 )}
 
