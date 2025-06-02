@@ -339,7 +339,20 @@ const MyNFTs = () => {
 
                 <div className="relative">
                   <div className="aspect-square bg-black/60 rounded-xl mb-6 overflow-hidden border border-cyan-400/20">
-                    <div className="w-full h-full flex items-center justify-center text-cyan-400 text-2xl font-serif">
+                    <video
+                      className="w-full h-full object-cover"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                    >
+                      <source
+                        src="/videos/nft-video-5sec.mp4"
+                        type="video/mp4"
+                      />
+                      Your browser does not support the video tag.
+                    </video>
+                    <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full text-cyan-400 text-sm font-medium">
                       #{tokenId}
                     </div>
                   </div>
