@@ -46,13 +46,17 @@ const WalletStatus: React.FC<WalletStatusProps> = ({
             </div>
             <div
               className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0D1829] ${
-                isCorrectNetwork ? "bg-green-500" : "bg-yellow-500"
+                networkName === "Sepolia Testnet"
+                  ? "bg-green-500"
+                  : "bg-yellow-500"
               }`}
             >
               <span className="relative flex h-full">
                 <span
                   className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                    isCorrectNetwork ? "bg-green-500" : "bg-yellow-500"
+                    networkName === "Sepolia Testnet"
+                      ? "bg-green-500"
+                      : "bg-yellow-500"
                   }`}
                 ></span>
               </span>
@@ -72,7 +76,9 @@ const WalletStatus: React.FC<WalletStatusProps> = ({
             </div>
             <span
               className={`text-xs ${
-                isCorrectNetwork ? "text-green-400" : "text-yellow-400"
+                networkName === "Sepolia Testnet"
+                  ? "text-green-400"
+                  : "text-yellow-400"
               }`}
             >
               {networkName}

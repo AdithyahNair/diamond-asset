@@ -166,6 +166,11 @@ const CollectionDetails: React.FC = () => {
     try {
       if (!window.ethereum) return;
 
+      // First request account access
+      await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+
       const accounts = await window.ethereum.request({
         method: "eth_accounts",
       });
@@ -175,48 +180,110 @@ const CollectionDetails: React.FC = () => {
       if (accounts.length > 0 && !selectedAccount) {
         setSelectedAccount(accounts[0]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading accounts:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (isWalletConnected) {
-      loadAccounts();
-
-      if (window.ethereum) {
-        window.ethereum.on("accountsChanged", (accounts: string[]) => {
-          setAvailableAccounts(accounts);
-          setSelectedAccount(accounts.length > 0 ? accounts[0] : null);
-        });
+      if (error.code === 4100) {
+        setError("Please unlock your MetaMask and try again");
       }
     }
-  }, [isWalletConnected]);
+  };
 
   const checkCurrentNetwork = async () => {
     try {
       if (!window.ethereum) return;
 
+      // First ensure we have account access
+      await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+
       const chainId = await window.ethereum.request({ method: "eth_chainId" });
+      const sepoliaChainId = "0xaa36a7"; // Sepolia testnet
 
-      const networks: Record<string, string> = {
-        "0x1": "Ethereum Mainnet",
-        "0xaa36a7": "Sepolia Testnet",
-        "0x13881": "Polygon Mumbai",
-        "0xa86a": "Avalanche C-Chain",
-      };
+      // Check if we're on Sepolia
+      if (chainId !== sepoliaChainId) {
+        try {
+          // Try to switch to Sepolia
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: sepoliaChainId }],
+          });
 
-      setNetworkName(networks[chainId] || `Unknown Network (${chainId})`);
-    } catch (error) {
+          // After successful switch, update network name
+          setNetworkName("Sepolia Testnet");
+          setError(null);
+        } catch (error: any) {
+          if (error.code === 4902) {
+            // Network needs to be added
+            try {
+              await window.ethereum.request({
+                method: "wallet_addEthereumChain",
+                params: [
+                  {
+                    chainId: sepoliaChainId,
+                    chainName: "Sepolia Testnet",
+                    nativeCurrency: {
+                      name: "ETH",
+                      symbol: "ETH",
+                      decimals: 18,
+                    },
+                    rpcUrls: ["https://sepolia.infura.io/v3/"],
+                    blockExplorerUrls: ["https://sepolia.etherscan.io"],
+                  },
+                ],
+              });
+              // After adding network, update network name
+              setNetworkName("Sepolia Testnet");
+              setError(null);
+            } catch (addError: any) {
+              console.error("Error adding Sepolia network:", addError);
+              setError(
+                "Failed to add Sepolia network. Please add it manually in MetaMask."
+              );
+            }
+          } else if (error.code === 4001) {
+            setError("Please switch to Sepolia network to continue");
+          } else if (error.code === 4100) {
+            setError("Please unlock your MetaMask and try again");
+          } else {
+            console.error("Error switching to Sepolia:", error);
+            setError(
+              "Failed to switch network. Please switch to Sepolia manually."
+            );
+          }
+        }
+      } else {
+        // Already on Sepolia
+        setNetworkName("Sepolia Testnet");
+        setError(null);
+      }
+    } catch (error: any) {
       console.error("Error checking network:", error);
+      if (error.code === 4100) {
+        setError("Please unlock your MetaMask and try again");
+      } else {
+        setError(
+          "Failed to check network. Please make sure you're on Sepolia Testnet"
+        );
+      }
     }
   };
 
   useEffect(() => {
     if (isWalletConnected) {
-      checkCurrentNetwork();
+      // When wallet is connected, first load accounts then check network
+      loadAccounts().then(() => {
+        checkCurrentNetwork();
+      });
 
       if (window.ethereum) {
+        window.ethereum.on("accountsChanged", async (accounts: string[]) => {
+          setAvailableAccounts(accounts);
+          setSelectedAccount(accounts.length > 0 ? accounts[0] : null);
+          // Recheck network when accounts change
+          await checkCurrentNetwork();
+        });
+
         window.ethereum.on("chainChanged", () => {
           checkCurrentNetwork();
         });
@@ -248,12 +315,40 @@ const CollectionDetails: React.FC = () => {
     }
 
     if (!isWalletConnected || !walletAddress) {
-      connectWallet();
-      return;
+      try {
+        await connectWallet();
+        // After connecting, we need to wait a bit for MetaMask to be ready
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Check if connection was successful
+        if (!window.ethereum?.selectedAddress) {
+          setError("Please connect your wallet to continue");
+          return;
+        }
+      } catch (error) {
+        console.error("Wallet connection error:", error);
+        setError("Failed to connect wallet. Please try again.");
+        return;
+      }
     }
 
     if (!selectedTokenId) {
       setError("Please select an NFT to purchase");
+      return;
+    }
+
+    // Ensure we're on Sepolia network
+    try {
+      const chainId = await window.ethereum.request({ method: "eth_chainId" });
+      const sepoliaChainId = "0xaa36a7";
+      if (chainId !== sepoliaChainId) {
+        setError("Please switch to Sepolia network to continue");
+        return;
+      }
+    } catch (error) {
+      console.error("Network check error:", error);
+      setError(
+        "Failed to check network. Please ensure you're on Sepolia network"
+      );
       return;
     }
 
@@ -262,6 +357,9 @@ const CollectionDetails: React.FC = () => {
     setTxHash(null);
 
     try {
+      // Request account access first
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
@@ -278,7 +376,13 @@ const CollectionDetails: React.FC = () => {
       setTxHash(result.transaction?.hash || null);
 
       // Record the purchase in Supabase
-      await recordMintedNFT(user.email, walletAddress, selectedTokenId);
+      if (walletAddress) {
+        await recordMintedNFT(user.email, walletAddress, selectedTokenId);
+      } else {
+        console.error("Wallet address is undefined");
+        setError("Failed to record purchase. Please try again.");
+        return;
+      }
 
       setSuccessMessage(
         "Successfully purchased NFT! You can purchase another one if you'd like."
@@ -287,9 +391,16 @@ const CollectionDetails: React.FC = () => {
 
       // Reset selected token after successful purchase
       setSelectedTokenId(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Purchase error:", error);
-      setError("Failed to complete the purchase. Please try again.");
+      // More specific error messages
+      if (error.code === 4001) {
+        setError("Transaction was rejected. Please try again.");
+      } else if (error.code === 4100) {
+        setError("Please unlock your wallet and try again.");
+      } else {
+        setError("Failed to complete the purchase. Please try again.");
+      }
     } finally {
       setIsPurchasing(false);
     }
