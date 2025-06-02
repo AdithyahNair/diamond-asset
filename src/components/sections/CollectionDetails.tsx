@@ -7,6 +7,7 @@ import {
   RefreshCw,
   AlertCircle,
   Check,
+  X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -51,6 +52,7 @@ const CollectionDetails: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState<"crypto" | "card">("card");
   const [isProcessingCardPayment, setIsProcessingCardPayment] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const {
     isFullyAuthenticated,
@@ -503,6 +505,161 @@ const CollectionDetails: React.FC = () => {
     fetchAvailable();
   };
 
+  // Add new payment flow handlers
+  const handleBuyNowClick = () => {
+    if (!user) {
+      setError("Please login to purchase this item");
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentContinue = () => {
+    if (paymentMethod === "crypto") {
+      if (!isWalletConnected) {
+        connectWallet();
+        return;
+      }
+      handleCryptoPayment();
+    } else {
+      handleCardPayment();
+    }
+    setIsPaymentModalOpen(false);
+  };
+
+  // Payment Method Selection Modal
+  const renderPaymentModal = () => {
+    if (!isPaymentModalOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.2 }}
+          className="bg-[#13111C] rounded-2xl p-6 max-w-md w-full mx-4 relative border border-cyan-400/20"
+        >
+          {/* Close button */}
+          <button
+            onClick={() => setIsPaymentModalOpen(false)}
+            className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
+          >
+            <X size={24} />
+          </button>
+
+          <h3 className="text-2xl font-serif text-white mb-6">
+            Select Payment Method
+          </h3>
+
+          <div className="space-y-4 mb-8">
+            {/* Card Payment Option */}
+            <label className="block">
+              <div
+                className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                  paymentMethod === "card"
+                    ? "bg-cyan-400/10 border-cyan-400"
+                    : "bg-black/60 border-cyan-400/20 hover:border-cyan-400/40"
+                }`}
+              >
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="card"
+                    checked={paymentMethod === "card"}
+                    onChange={() => setPaymentMethod("card")}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
+                      paymentMethod === "card"
+                        ? "border-cyan-400"
+                        : "border-cyan-400/40"
+                    }`}
+                  >
+                    {paymentMethod === "card" && (
+                      <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-medium text-white">
+                      Credit/Debit Card
+                    </div>
+                    <div className="text-sm text-white/60">
+                      Pay with your card and claim later
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </label>
+
+            {/* Crypto Payment Option */}
+            <label className="block">
+              <div
+                className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                  paymentMethod === "crypto"
+                    ? "bg-cyan-400/10 border-cyan-400"
+                    : "bg-black/60 border-cyan-400/20 hover:border-cyan-400/40"
+                }`}
+              >
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="crypto"
+                    checked={paymentMethod === "crypto"}
+                    onChange={() => setPaymentMethod("crypto")}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
+                      paymentMethod === "crypto"
+                        ? "border-cyan-400"
+                        : "border-cyan-400/40"
+                    }`}
+                  >
+                    {paymentMethod === "crypto" && (
+                      <div className="w-2 h-2 rounded-full bg-cyan-400" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-medium text-white">Cryptocurrency</div>
+                    <div className="text-sm text-white/60">
+                      Pay with ETH on Sepolia network
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </label>
+          </div>
+
+          {paymentMethod === "crypto" && !isWalletConnected && (
+            <button
+              onClick={connectWallet}
+              className="w-full mb-4 py-3 px-6 rounded-xl font-medium bg-cyan-400/20 text-cyan-400 hover:bg-cyan-400/30 transition-colors"
+            >
+              Connect Wallet
+            </button>
+          )}
+
+          <button
+            onClick={handlePaymentContinue}
+            disabled={paymentMethod === "crypto" && !isWalletConnected}
+            className={`w-full py-3 px-6 rounded-xl font-medium transition-all ${
+              paymentMethod === "crypto" && !isWalletConnected
+                ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
+                : "bg-cyan-400 hover:bg-cyan-300 text-black"
+            }`}
+          >
+            Continue
+          </button>
+        </motion.div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="min-h-screen bg-black pt-24 pb-16">
@@ -638,143 +795,23 @@ const CollectionDetails: React.FC = () => {
                   </div>
                 </div>
 
-                {successMessage && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-4 p-4 bg-cyan-400/10 border border-cyan-400/20 rounded-xl text-cyan-400 text-sm flex items-center"
-                  >
-                    <Check size={16} className="mr-2 flex-shrink-0" />
-                    {successMessage}
-                    {txHash && (
-                      <a
-                        href={`https://sepolia.etherscan.io/tx/${txHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-2 underline hover:text-cyan-300"
-                      >
-                        View transaction
-                      </a>
-                    )}
-                  </motion.div>
-                )}
-
-                {!user && (
-                  <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-400 text-sm">
-                    Please login to purchase this item
-                  </div>
-                )}
-
-                {paymentMethod === "crypto" && user && !isWalletConnected && (
-                  <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-400 text-sm">
-                    Please connect your wallet to purchase with crypto
-                  </div>
-                )}
-
-                {/* Payment Method Selection */}
-                <div className="mb-6">
-                  <div className="flex gap-4 mb-4">
-                    <motion.button
-                      whileHover={{ y: -2 }}
-                      onClick={() => setPaymentMethod("card")}
-                      className={`flex-1 py-3 px-6 rounded-xl transition-colors ${
-                        paymentMethod === "card"
-                          ? "bg-cyan-400 text-black"
-                          : "bg-black/60 text-white/60 border border-cyan-400/20"
-                      }`}
-                    >
-                      Pay with Card
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ y: -2 }}
-                      onClick={() => setPaymentMethod("crypto")}
-                      className={`flex-1 py-3 px-6 rounded-xl transition-colors ${
-                        paymentMethod === "crypto"
-                          ? "bg-cyan-400 text-black"
-                          : "bg-black/60 text-white/60 border border-cyan-400/20"
-                      }`}
-                    >
-                      Pay with Crypto
-                    </motion.button>
-                  </div>
-
-                  <div className="text-sm text-white/60">
-                    {paymentMethod === "crypto"
-                      ? !isWalletConnected
-                        ? "You'll need to connect your wallet to pay with ETH."
-                        : "Pay with ETH. Your membership NFT will be transferred immediately."
-                      : "Pay with credit/debit card. Connect wallet later to claim your membership NFT."}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-4">
-                  {paymentMethod === "crypto" ? (
-                    !isWalletConnected ? (
-                      <motion.button
-                        whileHover={{ y: -2 }}
-                        onClick={connectWallet}
-                        className="w-full py-3 px-6 rounded-xl font-medium bg-cyan-400 hover:bg-cyan-300 text-black"
-                      >
-                        Connect Wallet
-                      </motion.button>
-                    ) : (
-                      <motion.button
-                        whileHover={{ y: -2 }}
-                        onClick={() => {
-                          if (available === 0) {
-                            setError("All NFTs have been sold");
-                            return;
-                          }
-                          // Automatically select the first available token
-                          if (availableTokens.length > 0) {
-                            setSelectedTokenId(availableTokens[0]);
-                            handleCryptoPayment();
-                          }
-                        }}
-                        disabled={isPurchasing || available <= 0}
-                        className={`w-full py-3 px-6 rounded-xl font-medium transition-all ${
-                          isPurchasing || available <= 0
-                            ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
-                            : "bg-cyan-400 hover:bg-cyan-300 text-black"
-                        }`}
-                      >
-                        {isPurchasing
-                          ? "Processing..."
-                          : available <= 0
-                          ? "Sold Out"
-                          : "Buy Now"}
-                      </motion.button>
-                    )
-                  ) : (
-                    <motion.button
-                      whileHover={{ y: -2 }}
-                      onClick={() => {
-                        if (available === 0) {
-                          setError("All NFTs have been sold");
-                          return;
-                        }
-                        // Automatically select the first available token
-                        if (availableTokens.length > 0) {
-                          setSelectedTokenId(availableTokens[0]);
-                          handleCardPayment();
-                        }
-                      }}
-                      disabled={isProcessingCardPayment || available <= 0}
-                      className={`w-full py-3 px-6 rounded-xl font-medium transition-all ${
-                        isProcessingCardPayment || available <= 0
-                          ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
-                          : "bg-cyan-400 hover:bg-cyan-300 text-black"
-                      }`}
-                    >
-                      {isProcessingCardPayment
-                        ? "Processing..."
-                        : available <= 0
-                        ? "Sold Out"
-                        : "Pay with Card"}
-                    </motion.button>
-                  )}
-                </div>
+                {/* Single Buy Now button */}
+                <motion.button
+                  whileHover={{ y: -2 }}
+                  onClick={handleBuyNowClick}
+                  disabled={isPurchasing || available <= 0}
+                  className={`w-full py-3 px-6 rounded-xl font-medium transition-all ${
+                    isPurchasing || available <= 0
+                      ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
+                      : "bg-cyan-400 hover:bg-cyan-300 text-black"
+                  }`}
+                >
+                  {isPurchasing
+                    ? "Processing..."
+                    : available <= 0
+                    ? "Sold Out"
+                    : "Buy Now"}
+                </motion.button>
 
                 {available === 0 && (user?.email || isWalletConnected) && (
                   <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-400 text-sm">
@@ -786,6 +823,7 @@ const CollectionDetails: React.FC = () => {
           </div>
         </div>
       </div>
+      {renderPaymentModal()}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
