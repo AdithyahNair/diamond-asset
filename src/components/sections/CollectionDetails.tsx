@@ -607,7 +607,7 @@ const CollectionDetails: React.FC = () => {
                     <div className="text-xl font-serif text-white flex items-center justify-end">
                       {isLoading && (user?.email || isWalletConnected) ? (
                         <span>Loading...</span>
-                      ) : available > 0 ? (
+                      ) : user?.email || isWalletConnected ? (
                         <div className="flex items-center">
                           {available} remaining
                           <motion.button
@@ -722,6 +722,10 @@ const CollectionDetails: React.FC = () => {
                       <motion.button
                         whileHover={{ y: -2 }}
                         onClick={() => {
+                          if (available === 0) {
+                            setError("All NFTs have been sold");
+                            return;
+                          }
                           // Automatically select the first available token
                           if (availableTokens.length > 0) {
                             setSelectedTokenId(availableTokens[0]);
@@ -735,13 +739,21 @@ const CollectionDetails: React.FC = () => {
                             : "bg-cyan-400 hover:bg-cyan-300 text-black"
                         }`}
                       >
-                        {isPurchasing ? "Processing..." : "Buy Now"}
+                        {isPurchasing
+                          ? "Processing..."
+                          : available <= 0
+                          ? "Sold Out"
+                          : "Buy Now"}
                       </motion.button>
                     )
                   ) : (
                     <motion.button
                       whileHover={{ y: -2 }}
                       onClick={() => {
+                        if (available === 0) {
+                          setError("All NFTs have been sold");
+                          return;
+                        }
                         // Automatically select the first available token
                         if (availableTokens.length > 0) {
                           setSelectedTokenId(availableTokens[0]);
@@ -757,10 +769,18 @@ const CollectionDetails: React.FC = () => {
                     >
                       {isProcessingCardPayment
                         ? "Processing..."
+                        : available <= 0
+                        ? "Sold Out"
                         : "Pay with Card"}
                     </motion.button>
                   )}
                 </div>
+
+                {available === 0 && (user?.email || isWalletConnected) && (
+                  <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-400 text-sm">
+                    All NFTs have been sold. Please check back later.
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
