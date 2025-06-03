@@ -58,7 +58,19 @@ export async function getOrCreateStripeCustomer(
       .single();
 
     if (profile?.stripe_customer_id) {
-      return profile.stripe_customer_id;
+      // Verify the customer still exists in Stripe
+      try {
+        const customer = await stripe.customers.retrieve(
+          profile.stripe_customer_id
+        );
+        if (!customer.deleted) {
+          return profile.stripe_customer_id;
+        }
+        // If customer was deleted, continue to create new customer
+      } catch (error) {
+        console.log("Customer not found in Stripe, creating new one");
+        // Continue to create new customer
+      }
     }
 
     // Create a new Stripe customer
@@ -114,7 +126,7 @@ export async function createCheckoutSession(
         userId,
       },
       success_url: `${origin}/my-nfts?session_id={CHECKOUT_SESSION_ID}&token_id=${tokenId}`,
-      cancel_url: `${origin}/collection/turtle-timepiece-genesis`,
+      cancel_url: `${origin}/collections`,
     });
 
     return session.url ?? "";
