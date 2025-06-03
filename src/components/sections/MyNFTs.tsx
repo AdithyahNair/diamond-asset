@@ -106,24 +106,39 @@ const MyNFTs = () => {
         try {
           console.log("Processing Stripe payment:", { sessionId, tokenId });
 
-          // 1. Verify the payment
+          // 1. Verify the payment in Stripe
           const verificationResult = await verifyPayment(sessionId);
           if (!verificationResult.success) {
             throw new Error("Payment verification failed");
           }
 
-          if (!user.email) throw new Error("User email not found");
+          // 2. Wait for webhook to process (max 5 seconds)
+          let attempts = 0;
+          while (attempts < 5) {
+            const { data: purchase } = await supabase
+              .from("nft_purchases")
+              .select("*")
+              .eq("user_email", user.email)
+              .eq("token_id", Number(tokenId))
+              .eq("status", "completed")
+              .single();
 
-          // 2. Update purchase data in Supabase
-          await updateNFTPurchaseStatus(user.email, Number(tokenId));
+            if (purchase) {
+              setSuccess(
+                `Successfully purchased NFT #${tokenId}! Connect your wallet to claim it.`
+              );
+              await checkNFTStatus();
+              return;
+            }
 
-          // 3. Show success message
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            attempts++;
+          }
+
+          // If we get here, webhook hasn't processed yet
           setSuccess(
-            `Successfully purchased NFT #${tokenId}! Connect your wallet to claim it.`
+            `Payment received! Please wait a moment for your NFT to appear.`
           );
-
-          // 4. Refresh the NFT status
-          await checkNFTStatus();
         } catch (err) {
           console.error("Error processing Stripe payment:", err);
           setError(

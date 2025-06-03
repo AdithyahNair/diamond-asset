@@ -240,19 +240,16 @@ export const getAvailableNFTsFromSupabase =
       console.log("All profiles data:", JSON.stringify(profiles, null, 2));
       console.log("Number of profiles found:", profiles?.length || 0);
 
-      if (!profiles || profiles.length === 0) {
-        console.log("No profiles found");
-        return { availableCount: 8, availableTokens: [1, 2, 3, 4, 5, 6, 7, 8] }; // If no profiles, all NFTs are available
-      }
-
       // Get all purchased token IDs across all users
       const purchasedTokens = new Set<number>();
-      profiles.forEach((profile) => {
-        const purchases = profile.nft_purchases || [];
-        purchases.forEach((tokenId: number) => purchasedTokens.add(tokenId));
-      });
+      if (profiles) {
+        profiles.forEach((profile) => {
+          const purchases = profile.nft_purchases || [];
+          purchases.forEach((tokenId: number) => purchasedTokens.add(tokenId));
+        });
+      }
 
-      // Calculate available tokens (tokens 1-8 that are not in purchasedTokens)
+      // Always calculate available tokens in order (1-8)
       const availableTokens: number[] = [];
       for (let i = 1; i <= 8; i++) {
         if (!purchasedTokens.has(i)) {

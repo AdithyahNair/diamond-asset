@@ -243,17 +243,31 @@ export const verifyPayment = async (sessionId: string) => {
     // Get the token ID from the session metadata
     const tokenId = session.metadata?.tokenId;
     const userEmail = session.customer_details?.email;
+    const userId = session.metadata?.userId;
 
     if (!tokenId || !userEmail) {
       throw new Error("Missing token ID or user email in session");
     }
 
-    console.log("Recording purchase:", { tokenId, userEmail });
+    console.log("Recording purchase:", { tokenId, userEmail, userId });
+
+    // First, check if this purchase already exists
+    const { data: existingPurchase } = await supabase
+      .from("nft_purchases")
+      .select("*")
+      .eq("user_email", userEmail)
+      .eq("token_id", Number(tokenId))
+      .eq("status", "completed");
+
+    if (existingPurchase && existingPurchase.length > 0) {
+      console.log("Purchase already recorded");
+      return { success: true };
+    }
 
     // Record the purchase in nft_purchases table
     const { error: purchaseError } = await supabase
       .from("nft_purchases")
-      .upsert({
+      .insert({
         user_email: userEmail,
         token_id: Number(tokenId),
         status: "completed",
@@ -264,6 +278,28 @@ export const verifyPayment = async (sessionId: string) => {
     if (purchaseError) {
       console.error("Error recording purchase:", purchaseError);
       throw purchaseError;
+    }
+
+    // Update user_profiles if userId exists
+    if (userId) {
+      const { data: profile } = await supabase
+        .from("user_profiles")
+        .select("nft_purchases")
+        .eq("user_id", userId)
+        .single();
+
+      const currentPurchases = profile?.nft_purchases || [];
+      const newPurchases = Array.isArray(currentPurchases)
+        ? [...new Set([...currentPurchases, Number(tokenId)])]
+        : [Number(tokenId)];
+
+      await supabase
+        .from("user_profiles")
+        .update({
+          nft_purchases: newPurchases,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
     }
 
     return { success: true };
