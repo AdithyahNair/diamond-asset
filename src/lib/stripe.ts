@@ -125,7 +125,7 @@ export async function createCheckoutSession(
         tokenId: tokenId.toString(),
         userId,
       },
-      success_url: `${origin}/my-nfts?session_id={CHECKOUT_SESSION_ID}&token_id=${tokenId}`,
+      success_url: `${origin}/my-collection?session_id={CHECKOUT_SESSION_ID}&token_id=${tokenId}`,
       cancel_url: `${origin}/collections`,
     });
 

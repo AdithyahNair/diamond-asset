@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { ArrowLeft, Heart, Share2, RefreshCw, X } from "lucide-react";
+import { ArrowLeft, RefreshCw, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../../contexts/AuthContext";
@@ -14,7 +14,6 @@ import {
 import { createCheckoutSession } from "../../lib/stripe";
 
 const CollectionDetails: React.FC = () => {
-  const [liked, setLiked] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -485,8 +484,7 @@ const CollectionDetails: React.FC = () => {
 
   // Add new payment flow handlers
   const handleBuyNowClick = () => {
-    if (!user) {
-      setError("Please login to purchase this item");
+    if (!user?.email && !isWalletConnected) {
       setIsAuthModalOpen(true);
       return;
     }
@@ -675,38 +673,6 @@ const CollectionDetails: React.FC = () => {
                   Your browser does not support the video tag.
                 </video>
               </div>
-
-              <div className="absolute bottom-4 left-4 right-4 flex justify-between">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`p-3 rounded-full backdrop-blur-md transition-all duration-300 ${
-                    liked
-                      ? "bg-red-500/20 text-red-500"
-                      : "bg-black/20 text-cyan-400 hover:bg-black/40"
-                  }`}
-                  onClick={() => setLiked(!liked)}
-                >
-                  <Heart size={20} fill={liked ? "currentColor" : "none"} />
-                </motion.button>
-
-                <div className="flex gap-2">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="p-3 rounded-full bg-black/20 backdrop-blur-md text-cyan-400 hover:bg-black/40 transition-all duration-300"
-                  >
-                    <Share2 size={20} />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="p-3 rounded-full bg-black/20 backdrop-blur-md text-cyan-400 hover:bg-black/40 transition-all duration-300"
-                  >
-                    <RefreshCw size={20} />
-                  </motion.button>
-                </div>
-              </div>
             </motion.div>
 
             <motion.div
@@ -748,29 +714,31 @@ const CollectionDetails: React.FC = () => {
                       whichever comes first
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-white/60 text-sm mb-1">Available</div>
-                    <div className="text-xl font-serif text-white flex items-center justify-end">
-                      {isLoading && (user?.email || isWalletConnected) ? (
-                        <span>Loading...</span>
-                      ) : user?.email || isWalletConnected ? (
-                        <div className="flex items-center">
-                          {available} remaining
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={handleRefreshCount}
-                            className="ml-2 p-1 rounded-full hover:bg-cyan-400/10 text-cyan-400"
-                            title="Refresh count"
-                          >
-                            <RefreshCw size={16} />
-                          </motion.button>
-                        </div>
-                      ) : (
-                        <span className="text-white/60">Login to view</span>
-                      )}
+                  {(user?.email || isWalletConnected) && (
+                    <div className="text-right">
+                      <div className="text-white/60 text-sm mb-1">
+                        Available
+                      </div>
+                      <div className="text-xl font-serif text-white flex items-center justify-end">
+                        {isLoading ? (
+                          <span>Loading...</span>
+                        ) : (
+                          <div className="flex items-center">
+                            {available} remaining
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={handleRefreshCount}
+                              className="ml-2 p-1 rounded-full hover:bg-cyan-400/10 text-cyan-400"
+                              title="Refresh count"
+                            >
+                              <RefreshCw size={16} />
+                            </motion.button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="mb-6">
@@ -794,17 +762,22 @@ const CollectionDetails: React.FC = () => {
                 <motion.button
                   whileHover={{ y: -2 }}
                   onClick={handleBuyNowClick}
-                  disabled={isPurchasing || available <= 0}
+                  disabled={
+                    isPurchasing ||
+                    (available <= 0 && (user?.email || isWalletConnected))
+                  }
                   className={`w-full py-3 px-6 rounded-xl font-medium transition-all ${
-                    isPurchasing || available <= 0
+                    isPurchasing
+                      ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
+                      : available <= 0 && (user?.email || isWalletConnected)
                       ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
                       : "bg-cyan-400 hover:bg-cyan-300 text-black"
                   }`}
                 >
                   {isPurchasing
                     ? "Processing..."
-                    : available <= 0
-                    ? "Sold Not"
+                    : available <= 0 && (user?.email || isWalletConnected)
+                    ? "Sold Out"
                     : "Buy Now"}
                 </motion.button>
 

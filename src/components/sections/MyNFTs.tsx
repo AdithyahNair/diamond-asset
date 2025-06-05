@@ -324,7 +324,7 @@ const MyNFTs = () => {
               whileHover={{ y: -2 }}
               className="mt-6 px-8 py-3 bg-cyan-400 text-black rounded-xl font-medium hover:bg-cyan-300 transition-colors"
               onClick={() =>
-                (window.location.href = "/collection/turtle-timepiece-genesis")
+                (window.location.href = "/collection/timeless-experience")
               }
             >
               Browse Collections

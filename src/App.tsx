@@ -24,7 +24,7 @@ const AppLayout = () => {
   const location = useLocation();
 
   // List of paths where footer should not be shown
-  const noFooterPaths = ["/my-nfts", "/collection/turtle-timepiece-genesis"];
+  const noFooterPaths = ["/my-nfts", "/collection/timeless-experience"];
 
   const shouldShowFooter =
     !noFooterPaths.includes(location.pathname) &&
@@ -48,7 +48,7 @@ const AppLayout = () => {
           }
         />
         <Route path="/collection/:id" element={<CollectionDetails />} />
-        <Route path="/my-nfts" element={<MyNFTs />} />
+        <Route path="/my-collection" element={<MyNFTs />} />
       </Routes>
       {shouldShowFooter && <Footer />}
     </div>

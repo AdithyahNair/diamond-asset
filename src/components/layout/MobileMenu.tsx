@@ -116,7 +116,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                 {user ? (
                   <>
                     <Link
-                      to="/my-nfts"
+                      to="/my-collection"
                       onClick={onClose}
                       className="block w-full py-2 text-center text-navy-900 bg-cyan-400 rounded-full hover:bg-cyan-500 transition-colors duration-300"
                     >

@@ -72,7 +72,7 @@ const Footer = () => {
             </p>
             <div className="flex flex-col items-center space-y-4">
               <p className="text-white/60">Ready to join?</p>
-              <Link to="/collection/turtle-timepiece-genesis">
+              <Link to="/collection/timeless-experience">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
