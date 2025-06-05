@@ -78,6 +78,11 @@ export const signOut = async () => {
   return { error };
 };
 
+export const resetPassword = async (email: string) => {
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+  return { data, error };
+};
+
 export const getUser = async () => {
   const { data } = await supabase.auth.getUser();
   return data?.user;

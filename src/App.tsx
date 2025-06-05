@@ -18,13 +18,18 @@ import MyNFTs from "./components/sections/MyNFTs";
 import { AuthProvider } from "./contexts/AuthContext";
 // import { CartProvider } from "./contexts/CartContext";
 import FAQ from "./components/sections/FAQ";
+import ResetPassword from "./components/auth/ResetPassword";
 
 // Component to handle layout and footer visibility
 const AppLayout = () => {
   const location = useLocation();
 
   // List of paths where footer should not be shown
-  const noFooterPaths = ["/my-nfts", "/collection/timeless-experience"];
+  const noFooterPaths = [
+    "/my-nfts",
+    "/collection/timeless-experience",
+    "/reset-password",
+  ];
 
   const shouldShowFooter =
     !noFooterPaths.includes(location.pathname) &&
@@ -49,6 +54,7 @@ const AppLayout = () => {
         />
         <Route path="/collection/:id" element={<CollectionDetails />} />
         <Route path="/my-collection" element={<MyNFTs />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
       {shouldShowFooter && <Footer />}
     </div>

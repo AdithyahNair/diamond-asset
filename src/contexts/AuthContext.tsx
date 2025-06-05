@@ -7,8 +7,14 @@ import React, {
 } from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useAccount } from "wagmi";
-import { getUser, signIn, signOut, signUp } from "../lib/supabase";
-import { User } from "@supabase/supabase-js";
+import {
+  getUser,
+  signIn,
+  signOut,
+  signUp,
+  resetPassword as resetPasswordRequest,
+} from "../lib/supabase";
+import { User, AuthError } from "@supabase/supabase-js";
 
 interface AuthContextType {
   user: User | null;
@@ -16,8 +22,15 @@ interface AuthContextType {
   walletAddress: string | undefined;
   isWalletConnected: boolean;
   isFullyAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ error: any }>;
-  signup: (email: string, password: string) => Promise<{ error: any }>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ error: AuthError | null }>;
+  signup: (
+    email: string,
+    password: string
+  ) => Promise<{ error: AuthError | null }>;
+  resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   logout: () => Promise<void>;
   connectWallet: () => void;
   shouldShowWalletPrompt: boolean;
@@ -40,7 +53,6 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasAttemptedAutoConnect, setHasAttemptedAutoConnect] = useState(false);
 
   const { address } = useAccount();
   const { openConnectModal } = useConnectModal();
@@ -64,36 +76,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loadUser();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<{ error: AuthError | null }> => {
     try {
       const { data, error } = await signIn(email, password);
       if (data.user) {
         setUser(data.user);
-        setHasAttemptedAutoConnect(false);
       }
-      return { error };
+      return { error: error as AuthError };
     } catch (error) {
-      return { error };
+      return { error: error as AuthError };
     }
   };
 
-  const signup = async (email: string, password: string) => {
+  const signup = async (
+    email: string,
+    password: string
+  ): Promise<{ error: AuthError | null }> => {
     try {
       const { data, error } = await signUp(email, password);
       if (data.user) {
         setUser(data.user);
-        setHasAttemptedAutoConnect(false);
       }
-      return { error };
+      return { error: error as AuthError };
     } catch (error) {
-      return { error };
+      return { error: error as AuthError };
     }
   };
 
   const logout = async () => {
     await signOut();
     setUser(null);
-    setHasAttemptedAutoConnect(false);
   };
 
   const connectWallet = () => {
@@ -104,7 +119,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (openConnectModal) {
       openConnectModal();
-      setHasAttemptedAutoConnect(true);
+    }
+  };
+
+  const resetPassword = async (
+    email: string
+  ): Promise<{ error: AuthError | null }> => {
+    try {
+      const { error } = await resetPasswordRequest(email);
+      return { error };
+    } catch (error) {
+      return { error: error as AuthError };
     }
   };
 
@@ -119,6 +144,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signup,
     logout,
     connectWallet,
+    resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
