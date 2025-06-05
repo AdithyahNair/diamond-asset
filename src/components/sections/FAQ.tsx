@@ -9,44 +9,49 @@ interface FAQItem {
 
 const faqs: FAQItem[] = [
   {
-    question: "What is the Timeless Experience Membership NFT?",
+    question: "What is the Timeless Experience?",
     answer:
-      "The Timeless Experience Membership NFT is your exclusive access pass to our curated collection of rare and valuable artifacts. It represents your position as a founding member of our community, giving you priority access to new releases and special benefits.",
+      "The Timeless Experience is a token gated gems & jewelry community. Our members will have access to unrivaled gem & jewelry events, exclusive offers on the rarest and most sought after diamonds, and an elite community of industry experts, passionate collectors & jewelry lovers.",
   },
   {
-    question: "What benefits do Timeless Experience Members receive?",
+    question: "How many memberships are available?",
     answer:
-      "Members get exclusive access to pre-sales, private viewings, community events, and the ability to participate in the curation of our collection. You'll also receive regular insights about rare artifacts and investment opportunities.",
+      "Only 88 Timeless Experience memberships are available. This limited quantity ensures exclusivity and a deeply personalized experience for each member.",
   },
   {
-    question: "Why is the membership offered as an NFT?",
+    question: "Is this a one-time purchase or an ongoing subscription?",
     answer:
-      "NFT technology allows us to provide verifiable ownership, transparent trading, and the ability to embed ongoing benefits into your membership. It also enables us to create a more engaging and interactive experience for our community.",
+      "The Timeless Experience is a one-time membership purchase that unlocks lifetime access to its benefits. However, some future experiences or assets may have separate costs or optional upgrades.",
   },
   {
-    question: "How do I mint the NFT?",
+    question: "What is the connection between the turtle and the membership?",
     answer:
-      "You can mint the NFT directly through our platform using either cryptocurrency or traditional payment methods. The process is simple and guided - just connect your wallet or create an account to get started.",
+      "The turtle represents timeless wisdom and the journey across generations. In the narrative, it is the guardian of rare stones, traveling through time and dimensions to deliver them to their rightful custodians. As a member, you become part of this story and mission.",
   },
   {
-    question: "When is the mint?",
+    question: "Do I need to understand blockchain or NFTs to participate?",
     answer:
-      "The minting period is currently active and will remain open until all founding memberships are claimed. We recommend joining early to secure your position in our community.",
+      "Not at all. While some benefits are powered by digital ownership, our onboarding makes it seamless, even for non-technical members. You'll receive step-by-step support to access and enjoy every aspect of your membership.",
   },
   {
-    question: "How much does the Founding Membership NFT cost?",
+    question: "Can I resell my membership?",
     answer:
-      "The founding membership NFT is priced to reflect its long-term value and the exclusive benefits it provides. Current pricing and available tiers can be viewed in our collections page.",
+      "Yes. Your membership is represented by a collectible digital pass, which can be resold on secondary marketplaces. However, resale may void some non-transferable benefits such as early co-creation rights.",
   },
   {
-    question: "What blockchain is the NFT on?",
+    question: "When and where can I use my membership?",
     answer:
-      "Our NFTs are minted on the Ethereum blockchain, specifically on the Sepolia network, ensuring security, transparency, and wide compatibility with popular wallets and marketplaces.",
+      "Your membership unlocks experiences throughout the year, both online and in select global cities. You'll receive advance notice for each event or drop, and priority registration as a Timeless Member.",
   },
   {
-    question: "Can I transfer my Membership NFT to another wallet?",
+    question: "Who is this for?",
     answer:
-      "Yes, your membership NFT is transferable. However, some membership benefits may be tied to the original minting address for security purposes.",
+      "This membership is ideal for:\n• Collectors of rare or meaningful assets\n• Early believers in alternative investments\n• Story-driven explorers of web3 and cultural capital\n• Patrons looking to support a visionary community",
+  },
+  {
+    question: "How do I get started?",
+    answer:
+      "You can purchase your pass right here. Early bird pricing and perks are available for the first 20 members before June 23rd.",
   },
 ];
 
@@ -60,10 +65,7 @@ const FAQ = () => {
           {/* Section Title */}
           <div className="text-left mb-6">
             <h2 className="font-serif text-4xl text-white mb-2">FAQs</h2>
-            <p className="text-xl text-white/60">
-              Frequently Asked Questions About the Timeless Experience
-              Membership NFT
-            </p>
+            <p className="text-xl text-white/60">General</p>
           </div>
 
           {/* FAQ List */}
