@@ -114,7 +114,7 @@ export async function createCheckoutSession(
             currency: "usd",
             product_data: {
               name: `Timeless Experience #${tokenId}`,
-              description: "Limited Edition NFT",
+              description: "Limited Edition Membership",
             },
             unit_amount: PRICE,
           },
