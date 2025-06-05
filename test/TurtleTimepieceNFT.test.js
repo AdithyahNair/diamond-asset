@@ -6,7 +6,7 @@ describe("TurtleTimepieceNFT", function () {
   let owner;
   let buyer1;
   let buyer2;
-  const MINT_PRICE = ethers.parseEther("0.001");
+  const MINT_PRICE = ethers.parseEther("0.11");
 
   beforeEach(async function () {
     // Get signers

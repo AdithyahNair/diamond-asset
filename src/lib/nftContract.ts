@@ -46,7 +46,7 @@ export const getMintPrice = async (provider: Provider) => {
     return ethers.formatEther(price);
   } catch (error) {
     console.error("Error getting sale price:", error);
-    return "0.001"; // Fallback to default price
+    return "0.11"; // Fallback to default price
   }
 };
 
