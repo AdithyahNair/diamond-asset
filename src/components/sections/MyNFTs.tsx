@@ -256,8 +256,12 @@ const MyNFTs = () => {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h1 className="font-serif text-4xl text-white mb-4">My NFTs</h1>
-            <p className="text-white/60">Please log in to view your NFTs</p>
+            <h1 className="font-serif text-4xl text-white mb-4">
+              My Collection
+            </h1>
+            <p className="text-white/60">
+              Please log in to view your collection
+            </p>
           </motion.div>
         </div>
       </div>
@@ -273,7 +277,7 @@ const MyNFTs = () => {
           transition={{ duration: 0.6 }}
           className="mb-12"
         >
-          <h1 className="font-serif text-4xl text-white mb-4">My NFTs</h1>
+          <h1 className="font-serif text-4xl text-white mb-4">My Collection</h1>
           <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
         </motion.div>
 
@@ -373,7 +377,7 @@ const MyNFTs = () => {
                   </div>
 
                   <h3 className="text-2xl font-serif text-white mb-4">
-                    Turtle Timepiece #{tokenId}
+                    Timeless Experience #{tokenId}
                   </h3>
 
                   {claimedNFTs.includes(tokenId) ? (

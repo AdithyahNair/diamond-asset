@@ -810,7 +810,7 @@ const CollectionDetails: React.FC = () => {
 
                 {available === 0 && (user?.email || isWalletConnected) && (
                   <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-400 text-sm">
-                    All NFTs have been sold. Please check back later.
+                    All memberships have been sold. Please check back later.
                   </div>
                 )}
               </div>

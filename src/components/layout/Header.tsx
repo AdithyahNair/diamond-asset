@@ -164,7 +164,7 @@ const Header = () => {
                     to="/my-nfts"
                     className="px-4 py-2 text-sm font-medium text-navy-900 bg-cyan-400 rounded-full hover:bg-cyan-500 transition-colors duration-300"
                   >
-                    My NFTs
+                    My Collection
                   </Link>
                   <button
                     onClick={logout}

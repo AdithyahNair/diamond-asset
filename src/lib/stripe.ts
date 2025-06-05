@@ -113,7 +113,7 @@ export async function createCheckoutSession(
           price_data: {
             currency: "usd",
             product_data: {
-              name: `Turtle Timepiece #${tokenId}`,
+              name: `Timeless Experience #${tokenId}`,
               description: "Limited Edition NFT",
             },
             unit_amount: PRICE,

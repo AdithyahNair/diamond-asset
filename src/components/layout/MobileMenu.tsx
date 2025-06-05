@@ -120,7 +120,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                       onClick={onClose}
                       className="block w-full py-2 text-center text-navy-900 bg-cyan-400 rounded-full hover:bg-cyan-500 transition-colors duration-300"
                     >
-                      My NFTs
+                      My Collection
                     </Link>
                     <button
                       onClick={() => {
