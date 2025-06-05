@@ -64,9 +64,9 @@ const TimelessTurtle = () => {
               <div className="space-y-6">
                 <p className="text-xl md:text-2xl text-white/80 leading-relaxed">
                   With this mission in mind, we are creating the timeless
-                  turtle, as a guardian and guide that will venture into space,
-                  time and the metaverse to ensure these rare assets find their
-                  next keepers.
+                  turtle. A guardian and guide, that will venture in space, time
+                  and the metaverse to ensure these rare artifacts find their
+                  next stewards.
                 </p>
               </div>
 

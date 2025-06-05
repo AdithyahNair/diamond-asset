@@ -20,6 +20,11 @@ const Logo = () => (
   </Link>
 );
 
+interface NavItem {
+  label: string;
+  path: string;
+}
+
 const Header = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const {
@@ -34,6 +39,8 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+
+  const navItems: NavItem[] = [];
 
   useEffect(() => {
     const checkNetwork = async () => {
@@ -102,10 +109,6 @@ const Header = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const navItems = [
-    { label: "Membership", path: "/collection/turtle-timepiece-genesis" },
-  ];
 
   return (
     <>

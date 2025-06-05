@@ -1,39 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import {
-  ArrowLeft,
-  Heart,
-  Share2,
-  RefreshCw,
-  AlertCircle,
-  Check,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Heart, Share2, RefreshCw, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../../contexts/AuthContext";
 import AuthModal from "../auth/AuthModal";
-import {
-  getNftContract,
-  getAvailableNFTs,
-  purchaseNft,
-  markTokenAsPrePurchased,
-} from "../../lib/nftContract";
+import { getAvailableNFTs, purchaseNft } from "../../lib/nftContract";
 import {
   supabase,
-  hasUserPurchasedNFT,
-  updateNFTPurchaseStatus,
   recordMintedNFT,
   getAvailableNFTsFromSupabase,
 } from "../../lib/supabase";
 import { createCheckoutSession } from "../../lib/stripe";
-
-// ETH price values
-const ETH_PRICE_USD = 0.001; // Price in ETH (0.001 ETH ≈ $2 at ~$2000/ETH)
-const USD_PRICE = 2; // USD equivalent (approximate)
-
-// NFT item ID
-const NFT_ITEM_ID = "turtle-timepiece-genesis";
 
 const CollectionDetails: React.FC = () => {
   const [liked, setLiked] = useState(false);
@@ -752,11 +730,22 @@ const CollectionDetails: React.FC = () => {
 
                 <div className="flex justify-between items-center mb-6">
                   <div>
-                    <div className="text-white/60 text-sm mb-1">
-                      Current Price
+                    <div className="text-white/60 text-sm mb-1">Price</div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-serif text-white/40 line-through">
+                        $388
+                      </span>
+                      <span className="text-2xl font-serif text-white">
+                        $288
+                      </span>
+                      <span className="text-sm text-cyan-400">Early Bird</span>
                     </div>
-                    <div className="text-2xl font-serif text-white">
-                      ${USD_PRICE}
+                    <div className="text-sm text-white/60 mt-1">
+                      Only 20 passes available
+                    </div>
+                    <div className="text-sm text-yellow-400/80 mt-2">
+                      Offer ends June 23rd or when first 20 passes are sold,
+                      whichever comes first
                     </div>
                   </div>
                   <div className="text-right">
@@ -790,7 +779,13 @@ const CollectionDetails: React.FC = () => {
                       An exclusive membership that offers curated access to rare
                       diamond investment opportunities, immersive luxury
                       experiences, and a backstage pass to the creation of a
-                      couture jewelry piece
+                      couture jewelry piece.{" "}
+                      <Link
+                        to="/#membership-benefits"
+                        className="text-cyan-400 hover:text-cyan-300 transition-colors"
+                      >
+                        See more details →
+                      </Link>
                     </p>
                   </div>
                 </div>
@@ -809,7 +804,7 @@ const CollectionDetails: React.FC = () => {
                   {isPurchasing
                     ? "Processing..."
                     : available <= 0
-                    ? "Sold Out"
+                    ? "Sold Not"
                     : "Buy Now"}
                 </motion.button>
 

@@ -115,30 +115,34 @@ const Benefits = () => {
       icon: CoCreateIcon,
       title: "Co-create",
       benefits: [
-        "Collaborate in the creation of the timeless turtle, a one of a kind jewelry piece made by renowned jewelry designer Jean Paul Xavier",
-        "Shape its story through motifs etched on its shell and body for eternity & vote on naming the creation",
+        "Engage in a behind the scenes experience where we will design a one-of-a-kind jewelry brooch crafted by the talented jewelry designer Jean Paul Xavier",
+        "Shape the creative direction by voting on design elements such as motifs to be etched on the shell. Your ideas will leave a permanent imprint on what we build together",
       ],
     },
     {
       icon: CollectIcon,
       title: "Collect",
       benefits: [
-        "Exclusive investment grade pink diamonds from Australia's now-closed Argyle mine",
-        "A limited edition memento, enhanced with augmented reality visuals of the turtle",
+        "Own a piece of history. Gain exclusive access to our curated vault of timeless assets, beginning with pink diamonds from Australia's now-closed Argyle mine",
+        "Every piece in the collection is a part of a greater narrative, offering provenance, scarcity, and emotional resonance",
       ],
     },
     {
       icon: ConnectIcon,
       title: "Connect",
       benefits: [
-        "With a community of gem lovers, art collectors and industry connoisseurs",
-        "Meeting them virtually and in person at the unveiling of the turtle",
+        "Join an intimate community of gem lovers, art collectors and industry experts",
+        "Meet in person at the unveiling of the Turtle and future events",
+        "24/7 access to certified gemologists and diamond experts",
       ],
     },
   ];
 
   return (
-    <section className="relative py-8 md:py-12 bg-black overflow-hidden">
+    <section
+      id="membership-benefits"
+      className="relative py-8 md:py-12 bg-black overflow-hidden"
+    >
       {/* Background decorative elements */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-radial from-cyan-400/5 to-transparent opacity-30" />
@@ -155,7 +159,7 @@ const Benefits = () => {
           className="text-center mb-8"
         >
           <h2 className="font-serif text-4xl md:text-5xl text-white mb-3">
-            As a founding member, you have access to:
+            Membership Benefits
           </h2>
           <div className="w-24 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent mx-auto mb-8" />
         </motion.div>
