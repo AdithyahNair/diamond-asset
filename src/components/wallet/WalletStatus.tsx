@@ -17,7 +17,7 @@ const WalletStatus: React.FC<WalletStatusProps> = ({
 
   const handleViewOnExplorer = () => {
     const baseUrl = isCorrectNetwork
-      ? "https://sepolia.etherscan.io/address/"
+      ? "https://etherscan.io/address/"
       : "https://etherscan.io/address/";
     window.open(`${baseUrl}${address}`, "_blank");
   };
@@ -46,7 +46,7 @@ const WalletStatus: React.FC<WalletStatusProps> = ({
             </div>
             <div
               className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0D1829] ${
-                networkName === "Sepolia Testnet"
+                networkName === "Ethereum Mainnet"
                   ? "bg-green-500"
                   : "bg-yellow-500"
               }`}
@@ -54,7 +54,7 @@ const WalletStatus: React.FC<WalletStatusProps> = ({
               <span className="relative flex h-full">
                 <span
                   className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                    networkName === "Sepolia Testnet"
+                    networkName === "Ethereum Mainnet"
                       ? "bg-green-500"
                       : "bg-yellow-500"
                   }`}
@@ -76,7 +76,7 @@ const WalletStatus: React.FC<WalletStatusProps> = ({
             </div>
             <span
               className={`text-xs ${
-                networkName === "Sepolia Testnet"
+                networkName === "Ethereum Mainnet"
                   ? "text-green-400"
                   : "text-yellow-400"
               }`}

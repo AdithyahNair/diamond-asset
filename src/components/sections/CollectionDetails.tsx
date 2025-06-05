@@ -200,19 +200,19 @@ const CollectionDetails: React.FC = () => {
       });
 
       const chainId = await window.ethereum.request({ method: "eth_chainId" });
-      const sepoliaChainId = "0xaa36a7"; // Sepolia testnet
+      const mainnetChainId = "0x1"; // Ethereum mainnet
 
-      // Check if we're on Sepolia
-      if (chainId !== sepoliaChainId) {
+      // Check if we're on mainnet
+      if (chainId !== mainnetChainId) {
         try {
-          // Try to switch to Sepolia
+          // Try to switch to mainnet
           await window.ethereum.request({
             method: "wallet_switchEthereumChain",
-            params: [{ chainId: sepoliaChainId }],
+            params: [{ chainId: mainnetChainId }],
           });
 
           // After successful switch, update network name
-          setNetworkName("Sepolia Testnet");
+          setNetworkName("Ethereum Mainnet");
           setError(null);
         } catch (error: any) {
           if (error.code === 4902) {
@@ -222,41 +222,41 @@ const CollectionDetails: React.FC = () => {
                 method: "wallet_addEthereumChain",
                 params: [
                   {
-                    chainId: sepoliaChainId,
-                    chainName: "Sepolia Testnet",
+                    chainId: mainnetChainId,
+                    chainName: "Ethereum Mainnet",
                     nativeCurrency: {
                       name: "ETH",
                       symbol: "ETH",
                       decimals: 18,
                     },
-                    rpcUrls: ["https://sepolia.infura.io/v3/"],
-                    blockExplorerUrls: ["https://sepolia.etherscan.io"],
+                    rpcUrls: ["https://mainnet.infura.io/v3/"],
+                    blockExplorerUrls: ["https://etherscan.io"],
                   },
                 ],
               });
               // After adding network, update network name
-              setNetworkName("Sepolia Testnet");
+              setNetworkName("Ethereum Mainnet");
               setError(null);
             } catch (addError: any) {
-              console.error("Error adding Sepolia network:", addError);
+              console.error("Error adding Ethereum network:", addError);
               setError(
-                "Failed to add Sepolia network. Please add it manually in MetaMask."
+                "Failed to add Ethereum network. Please add it manually in MetaMask."
               );
             }
           } else if (error.code === 4001) {
-            setError("Please switch to Sepolia network to continue");
+            setError("Please switch to Ethereum network to continue");
           } else if (error.code === 4100) {
             setError("Please unlock your MetaMask and try again");
           } else {
-            console.error("Error switching to Sepolia:", error);
+            console.error("Error switching to Ethereum:", error);
             setError(
-              "Failed to switch network. Please switch to Sepolia manually."
+              "Failed to switch network. Please switch to Ethereum manually."
             );
           }
         }
       } else {
-        // Already on Sepolia
-        setNetworkName("Sepolia Testnet");
+        // Already on mainnet
+        setNetworkName("Ethereum Mainnet");
         setError(null);
       }
     } catch (error: any) {
@@ -265,7 +265,7 @@ const CollectionDetails: React.FC = () => {
         setError("Please unlock your MetaMask and try again");
       } else {
         setError(
-          "Failed to check network. Please make sure you're on Sepolia Testnet"
+          "Failed to check network. Please make sure you're on Ethereum Mainnet"
         );
       }
     }
@@ -338,18 +338,18 @@ const CollectionDetails: React.FC = () => {
       return;
     }
 
-    // Ensure we're on Sepolia network
+    // Ensure we're on Ethereum network
     try {
       const chainId = await window.ethereum.request({ method: "eth_chainId" });
-      const sepoliaChainId = "0xaa36a7";
-      if (chainId !== sepoliaChainId) {
-        setError("Please switch to Sepolia network to continue");
+      const mainnetChainId = "0x1";
+      if (chainId !== mainnetChainId) {
+        setError("Please switch to Ethereum network to continue");
         return;
       }
     } catch (error) {
       console.error("Network check error:", error);
       setError(
-        "Failed to check network. Please ensure you're on Sepolia network"
+        "Failed to check network. Please ensure you're on Ethereum network"
       );
       return;
     }
@@ -627,7 +627,7 @@ const CollectionDetails: React.FC = () => {
                   <div>
                     <div className="font-medium text-white">Cryptocurrency</div>
                     <div className="text-sm text-white/60">
-                      Pay with ETH on Sepolia network
+                      Pay with ETH on Ethereum network
                     </div>
                   </div>
                 </div>

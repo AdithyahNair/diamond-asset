@@ -1,6 +1,6 @@
 {
-  "name": "Turtle Timepiece Genesis #2",
-  "description": "Number 2 in the series of the Turtle Timepiece Collection. A timeless asset with historical significance.",
+  "name": "Turtle Timepiece Genesis #17",
+  "description": "Number 17 in the series of the Turtle Timepiece Collection. A timeless asset with historical significance.",
   "image": "ipfs://bafybeihsdpkdbyyeaqkvilr4ikfl6aduuabofk4we5aqgocx5dnu56aqfa",
   "attributes": [
     {
@@ -13,11 +13,11 @@
     },
     {
       "trait_type": "Edition",
-      "value": "2 of 20"
+      "value": "17 of 20"
     },
     {
       "trait_type": "Serial Number",
-      "value": "TT-002-GEN"
+      "value": "TT-017-GEN"
     }
   ]
 }
