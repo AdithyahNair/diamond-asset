@@ -30,6 +30,11 @@ const faqs: FAQItem[] = [
       "The turtle represents timeless wisdom and the journey across generations. In the narrative, it is the guardian of rare stones, traveling through time and dimensions to deliver them to their rightful custodians. As a member, you become part of this story and mission.",
   },
   {
+    question: "Do I need to understand blockchain or NFTs to participate?",
+    answer:
+      "Not at all. While some benefits are powered by digital ownership, our onboarding makes it seamless, even for non-technical members. You’ll receive step-by-step support to access and enjoy every aspect of your membership.",
+  },
+  {
     question: "Can I resell my membership?",
     answer:
       "Yes. Your membership is represented by a collectible digital pass, which can be resold on secondary marketplaces. However, resale may void some non-transferable benefits such as early co-creation rights.",
