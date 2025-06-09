@@ -17,12 +17,12 @@ const faqs: FAQItem[] = [
   {
     question: "How many memberships are available?",
     answer:
-      "Only 88 Timeless Experience memberships are available. This limited quantity ensures exclusivity and a deeply personalized experience for each member.",
+      "Only 88 Timeless Experience memberships are available. This limited quantity ensures a deeply personalized experience for each member.",
   },
   {
     question: "Is this a one-time purchase or an ongoing subscription?",
     answer:
-      "The Timeless Experience is a one-time membership purchase that unlocks lifetime access to its benefits. However, some future experiences or assets offerings may have separate costs or optional upgrades.",
+      "The Timeless Experience is a one-time membership purchase that unlocks lifetime access to its benefits. However, some future offerings may have separate costs or optional upgrades.",
   },
   {
     question: "What is the connection between the turtle and the membership?",
@@ -32,7 +32,7 @@ const faqs: FAQItem[] = [
   {
     question: "Do I need to understand blockchain or NFTs to participate?",
     answer:
-      "Not at all. While some benefits are powered by digital ownership, our onboarding makes it seamless, even for non-technical members. You’ll receive step-by-step support to access and enjoy every aspect of your membership.",
+      "Not at all. While some benefits are powered by digital ownership, our onboarding makes it seamless, even for non-technical members. You'll receive step-by-step support to access and enjoy every aspect of your membership.",
   },
   {
     question: "Can I resell my membership?",
@@ -46,8 +46,26 @@ const faqs: FAQItem[] = [
   },
   {
     question: "Who is this for?",
-    answer:
-      "This membership is ideal for:\n• Collectors of rare or meaningful assets\n• Early believers in alternative investments\n• Story-driven explorers of web3 and cultural capital\n• Patrons looking to support a visionary community",
+    answer: (
+      <ul className="space-y-2 list-none">
+        <li className="flex items-start">
+          <span className="text-cyan-400 mr-2">•</span>
+          <span>Collectors of rare or meaningful assets</span>
+        </li>
+        <li className="flex items-start">
+          <span className="text-cyan-400 mr-2">•</span>
+          <span>Early believers in alternative investments</span>
+        </li>
+        <li className="flex items-start">
+          <span className="text-cyan-400 mr-2">•</span>
+          <span>Story-driven explorers of web3 and cultural capital</span>
+        </li>
+        <li className="flex items-start">
+          <span className="text-cyan-400 mr-2">•</span>
+          <span>Patrons looking to support a visionary community</span>
+        </li>
+      </ul>
+    ),
   },
   {
     question: "How do I get started?",
