@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface FAQItem {
   question: string;
-  answer: string;
+  answer: string | JSX.Element;
 }
 
 const faqs: FAQItem[] = [
@@ -36,7 +37,7 @@ const faqs: FAQItem[] = [
   {
     question: "When and where can I use my membership?",
     answer:
-      "Your membership unlocks experiences throughout the year, both online and in select global cities. You’ll receive advance notice for each event or drop, and priority registration as a Timeless Member.",
+      "Your membership unlocks experiences throughout the year, both online and in select global cities. You'll receive advance notice for each event or drop, and priority registration as a Timeless Member.",
   },
   {
     question: "Who is this for?",
@@ -45,8 +46,19 @@ const faqs: FAQItem[] = [
   },
   {
     question: "How do I get started?",
-    answer:
-      "You can purchase your pass right here. Early bird pricing and perks are available for the first 20 members before June 23rd.",
+    answer: (
+      <>
+        You can purchase your pass right{" "}
+        <Link
+          to="/collection/timeless-experience"
+          className="text-cyan-400 hover:text-cyan-300"
+        >
+          here
+        </Link>
+        . Early bird pricing and perks are available for the first 20 members
+        before June 23rd.
+      </>
+    ),
   },
 ];
 
