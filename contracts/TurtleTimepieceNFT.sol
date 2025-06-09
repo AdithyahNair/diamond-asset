@@ -17,7 +17,7 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
     Counters.Counter private _tokenIds;
     
     // Maximum supply of NFTs
-    uint256 public constant MAX_SUPPLY = 88;
+    uint256 public constant MAX_SUPPLY = 20;
     
     // Mapping for token URIs
     mapping(uint256 => string) private _tokenURIs;
