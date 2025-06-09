@@ -1,23 +1,27 @@
 {
   "name": "Turtle Timepiece Genesis #16",
   "description": "Number 16 in the series of the Turtle Timepiece Collection. A timeless asset with historical significance.",
-  "image": "ipfs://bafybeihsdpkdbyyeaqkvilr4ikfl6aduuabofk4we5aqgocx5dnu56aqfa",
+  "animation_url": "ipfs://QmPvMK2GW1s9dfNN3aBV7MW41k9XshDDXY31VV81RhUYtr",
+  "animation_type": "video/mp4",
+  "external_url": "https://ipfs.io/ipfs/QmPvMK2GW1s9dfNN3aBV7MW41k9XshDDXY31VV81RhUYtr",
+  "background_color": "000000",
   "attributes": [
-    {
-      "trait_type": "Collection",
-      "value": "Genesis"
-    },
-    {
-      "trait_type": "Rarity",
-      "value": "Epic"
-    },
-    {
-      "trait_type": "Edition",
-      "value": "16 of 20"
-    },
     {
       "trait_type": "Serial Number",
       "value": "TT-016-GEN"
+    },
+    {
+      "trait_type": "Media Type",
+      "value": "Video NFT"
     }
-  ]
+  ],
+  "properties": {
+    "files": [
+      {
+        "uri": "ipfs://QmPvMK2GW1s9dfNN3aBV7MW41k9XshDDXY31VV81RhUYtr",
+        "type": "video/mp4"
+      }
+    ],
+    "category": "video"
+  }
 }

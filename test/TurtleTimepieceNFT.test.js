@@ -26,7 +26,7 @@ describe("TurtleTimepieceNFT", function () {
     });
 
     it("Should pre-mint all NFTs to the owner", async function () {
-      const totalSupply = 8; // MAX_SUPPLY from contract
+      const totalSupply = 20; // MAX_SUPPLY from contract
       for (let i = 1; i <= totalSupply; i++) {
         expect(await nftContract.ownerOf(i)).to.equal(owner.address);
         expect(await nftContract.isTokenForSale(i)).to.equal(true);

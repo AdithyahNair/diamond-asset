@@ -1,5 +1,5 @@
 {
-  "address": "0x4C38Cf01D87570F5fa4b515742282B6E37A275e1",
+  "address": "0xb069a4dF5c599C0bA4C155a16e10fD3BA843176F",
   "abi": [
     {
       "inputs": [],
@@ -816,5 +816,6 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-  ]
+  ],
+  "baseURI": "ipfs://QmdeWAdt3NxbzRRAM6hdw8pxemgFY8Eje4jjZvZDFe5bni/"
 }

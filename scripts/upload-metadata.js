@@ -1,7 +1,7 @@
+require("dotenv").config();
 const pinataSDK = require("@pinata/sdk");
 const fs = require("fs");
 const path = require("path");
-require("dotenv").config();
 
 // Initialize Pinata client
 const pinata = new pinataSDK({
@@ -24,7 +24,21 @@ async function uploadMetadata() {
     return result.IpfsHash;
   } catch (error) {
     console.error("Error uploading metadata:", error);
+    throw error;
   }
 }
 
-uploadMetadata();
+// Execute the upload
+uploadMetadata()
+  .then((directoryCID) => {
+    console.log("\nNext steps:");
+    console.log(
+      "1. Call setBaseURI on the contract with:",
+      `ipfs://${directoryCID}/`
+    );
+    console.log(
+      "2. Verify the metadata is accessible at:",
+      `https://ipfs.io/ipfs/${directoryCID}/1.json`
+    );
+  })
+  .catch(console.error);

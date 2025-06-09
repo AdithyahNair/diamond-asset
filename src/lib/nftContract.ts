@@ -9,7 +9,7 @@ export const NFT_CONTRACT_ADDRESS = contractInfo.address;
 export const NFT_CONTRACT_ABI = contractInfo.abi;
 
 // NFT price in ETH
-export const NFT_PRICE = 0.001;
+export const NFT_PRICE = 0.114;
 
 // Get the NFT contract instance
 export const getNftContract = async (signer: Signer | Provider) => {
