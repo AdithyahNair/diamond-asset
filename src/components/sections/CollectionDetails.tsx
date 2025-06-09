@@ -744,7 +744,7 @@ const CollectionDetails: React.FC = () => {
                 <div className="mb-6">
                   <div className="p-4 bg-cyan-400/10 border border-cyan-400/20 rounded-xl text-white/80">
                     <p>
-                      An exclusive membership that offers curated access to rare
+                      A lifetime membership that offers curated access to rare
                       diamond investment opportunities, immersive luxury
                       experiences, and a backstage pass to the creation of a
                       couture jewelry piece.{" "}
