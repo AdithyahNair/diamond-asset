@@ -14,23 +14,6 @@ const Logo = () => (
   </Link>
 );
 
-const SocialIcon = ({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="w-10 h-10 flex items-center justify-center rounded-full border border-cyan-400/20 text-cyan-400 hover:bg-cyan-400/10 transition-colors duration-300"
-  >
-    {children}
-  </a>
-);
-
 const Footer = () => {
   return (
     <footer className="relative bg-black overflow-hidden">
@@ -66,12 +49,7 @@ const Footer = () => {
             <h2 className="font-serif text-4xl md:text-5xl text-white mb-6">
               Join the Timeless Experience
             </h2>
-            <p className="text-xl text-white/80 mb-8">
-              Be part of a community that understands and appreciates the true
-              value of timeless assets.
-            </p>
             <div className="flex flex-col items-center space-y-4">
-              <p className="text-white/60">Ready to join?</p>
               <Link to="/collection/timeless-experience">
                 <motion.button
                   whileHover={{ scale: 1.05 }}

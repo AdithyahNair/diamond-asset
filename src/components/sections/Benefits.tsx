@@ -115,25 +115,25 @@ const Benefits = () => {
       icon: CoCreateIcon,
       title: "Co-create",
       benefits: [
-        "Engage in a behind the scenes experience where we will design a one-of-a-kind jewelry brooch crafted by the talented jewelry designer Jean Paul Xavier",
-        "Shape the creative direction by voting on design elements such as motifs to be etched on the shell. Your ideas will leave a permanent imprint on what we build together",
+        "Engage in a behind the scenes experience where we will design a one-of-a-kind jewelry brooch crafted by the talented jewelry designer Jean Paul Xavier.",
+        "Shape the creative direction by voting on design elements such as motifs to be etched on the shell. Your ideas will leave a permanent imprint on what we build together.",
       ],
     },
     {
       icon: CollectIcon,
       title: "Collect",
       benefits: [
-        "Own a piece of history. Gain exclusive access to our curated vault of timeless assets, beginning with pink diamonds from Australia's now-closed Argyle mine",
-        "Every piece in the collection is a part of a greater narrative, offering provenance, scarcity, and emotional resonance",
+        "Own a piece of history. Gain exclusive access to our curated vault of timeless assets, beginning with pink diamonds from Australia's now-closed Argyle mine.",
+        "Every piece in the collection is a part of a greater narrative, offering provenance, scarcity, and emotional resonance.",
       ],
     },
     {
       icon: ConnectIcon,
       title: "Connect",
       benefits: [
-        "Join an intimate community of gem lovers, art collectors and industry experts",
-        "Meet in person at the unveiling of the Turtle and future events",
-        "24/7 access to certified gemologists and diamond experts",
+        "Join an intimate community of gem lovers, art collectors and industry experts.",
+        "Meet in person at the unveiling of the Turtle and future events.",
+        "24/7 access to certified gemologists and diamond experts.",
       ],
     },
   ];
