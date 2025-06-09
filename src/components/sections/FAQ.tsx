@@ -9,11 +9,6 @@ interface FAQItem {
 
 const faqs: FAQItem[] = [
   {
-    question: "What is the Timeless Experience?",
-    answer:
-      "The Timeless Experience is a token gated gems & jewelry community. Our members will have access to unrivaled gem & jewelry events, exclusive offers on the rarest and most sought after diamonds, and an elite community of industry experts, passionate collectors & jewelry lovers.",
-  },
-  {
     question: "How many memberships are available?",
     answer:
       "Only 88 Timeless Experience memberships are available. This limited quantity ensures exclusivity and a deeply personalized experience for each member.",
@@ -22,26 +17,6 @@ const faqs: FAQItem[] = [
     question: "Is this a one-time purchase or an ongoing subscription?",
     answer:
       "The Timeless Experience is a one-time membership purchase that unlocks lifetime access to its benefits. However, some future experiences or assets may have separate costs or optional upgrades.",
-  },
-  {
-    question: "What is the connection between the turtle and the membership?",
-    answer:
-      "The turtle represents timeless wisdom and the journey across generations. In the narrative, it is the guardian of rare stones, traveling through time and dimensions to deliver them to their rightful custodians. As a member, you become part of this story and mission.",
-  },
-  {
-    question: "Do I need to understand blockchain or NFTs to participate?",
-    answer:
-      "Not at all. While some benefits are powered by digital ownership, our onboarding makes it seamless, even for non-technical members. You'll receive step-by-step support to access and enjoy every aspect of your membership.",
-  },
-  {
-    question: "Can I resell my membership?",
-    answer:
-      "Yes. Your membership is represented by a collectible digital pass, which can be resold on secondary marketplaces. However, resale may void some non-transferable benefits such as early co-creation rights.",
-  },
-  {
-    question: "When and where can I use my membership?",
-    answer:
-      "Your membership unlocks experiences throughout the year, both online and in select global cities. You'll receive advance notice for each event or drop, and priority registration as a Timeless Member.",
   },
   {
     question: "Who is this for?",

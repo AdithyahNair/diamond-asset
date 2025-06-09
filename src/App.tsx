@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   useLocation,
+  useSearchParams,
 } from "react-router-dom";
 import Header from "./components/layout/Header";
 import Hero from "./components/sections/Hero";
@@ -23,6 +24,17 @@ import ResetPassword from "./components/auth/ResetPassword";
 // Component to handle layout and footer visibility
 const AppLayout = () => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const section = searchParams.get("section");
+    if (section === "membership-benefits") {
+      const element = document.getElementById("membership-benefits");
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, [searchParams]);
 
   // List of paths where footer should not be shown
   const noFooterPaths = [

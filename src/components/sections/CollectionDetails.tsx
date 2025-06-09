@@ -699,7 +699,7 @@ const CollectionDetails: React.FC = () => {
                     <div className="text-white/60 text-sm mb-1">Price</div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-serif text-white/40 line-through">
-                        $388
+                        $488
                       </span>
                       <span className="text-2xl font-serif text-white">
                         $288
@@ -749,7 +749,7 @@ const CollectionDetails: React.FC = () => {
                       experiences, and a backstage pass to the creation of a
                       couture jewelry piece.{" "}
                       <Link
-                        to="/#membership-benefits"
+                        to="/?section=membership-benefits"
                         className="text-cyan-400 hover:text-cyan-300 transition-colors"
                       >
                         See more details →
