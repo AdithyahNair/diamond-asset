@@ -10,7 +10,7 @@ const stripe = new Stripe(import.meta.env.VITE_STRIPE_SECRET_KEY || "", {
 });
 
 // Price in cents (USD)
-const PRICE = 100; // $2.00
+const PRICE = 28800; // $2.00
 
 // Allowed webhook events
 const allowedEvents: Stripe.Event.Type[] = [
@@ -68,7 +68,7 @@ export async function getOrCreateStripeCustomer(
         }
         // If customer was deleted, continue to create new customer
       } catch (error) {
-        console.log("Customer not found in Stripe, creating new one");
+        console.log("Customer not found in Stripe, creating new one: ", error);
         // Continue to create new customer
       }
     }
