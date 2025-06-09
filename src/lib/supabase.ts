@@ -254,9 +254,9 @@ export const getAvailableNFTsFromSupabase =
         });
       }
 
-      // Always calculate available tokens in order (1-8)
+      // Calculate available tokens in order (1-20)
       const availableTokens: number[] = [];
-      for (let i = 1; i <= 8; i++) {
+      for (let i = 1; i <= 20; i++) {
         if (!purchasedTokens.has(i)) {
           availableTokens.push(i);
         }
