@@ -45,7 +45,7 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
     event ContractPaused(address indexed by);
     event ContractUnpaused(address indexed by);
     
-    constructor() ERC721("Timeless Experience", "Turtle") {
+    constructor() ERC721("Timeless Experience", "Timeless") {
         _baseTokenURI = "";
         // Pre-mint all NFTs to the contract owner
         address owner = _msgSender();

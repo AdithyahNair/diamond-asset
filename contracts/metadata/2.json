@@ -10,27 +10,6 @@
     {
       "trait_type": "Serial Number",
       "value": "TT-002-GEN"
-    },
-    {
-      "trait_type": "Media Type",
-      "value": "Video NFT"
-    },
-    {
-      "trait_type": "Collection",
-      "value": "Genesis"
     }
-  ],
-  "properties": {
-    "files": [
-      {
-        "uri": "ipfs://QmPvMK2GW1s9dfNN3aBV7MW41k9XshDDXY31VV81RhUYtr",
-        "type": "video/mp4"
-      },
-      {
-        "uri": "ipfs://bafybeihsdpkdbyyeaqkvilr4ikfl6aduuabofk4we5aqgocx5dnu56aqfa",
-        "type": "image/png"
-      }
-    ],
-    "category": "video"
-  }
+  ]
 }
