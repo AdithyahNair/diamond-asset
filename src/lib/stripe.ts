@@ -126,7 +126,7 @@ export async function createCheckoutSession(
         userId,
       },
       success_url: `${origin}/my-collection?session_id={CHECKOUT_SESSION_ID}&token_id=${tokenId}`,
-      cancel_url: `${origin}/collections`,
+      cancel_url: `${origin}/collection/turtle-timepiece`,
     });
 
     return session.url ?? "";
