@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X, Mail, Lock, Check, ArrowLeft } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import PasswordRequirements from "./PasswordRequirements";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
 
   const {
     login,
@@ -191,12 +193,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
                 {!user ? (
                   <form onSubmit={handleSubmit} className="space-y-6">
-                    {error && (
-                      <div className="p-4 bg-red-500/10 text-red-400 rounded-xl border border-red-500/20 flex items-start">
-                        <span className="text-sm">{error}</span>
-                      </div>
-                    )}
-
                     <div>
                       <label className="block text-white/80 text-sm font-medium mb-2">
                         Email Address
@@ -234,13 +230,28 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                           type="password"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="w-full pl-10 px-4 py-3 bg-black/50 border border-cyan-400/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-transparent transition-all text-white placeholder-white/30"
+                          className={`w-full pl-10 px-4 py-3 bg-black/50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-transparent transition-all text-white placeholder-white/30 ${
+                            error ? "border-red-500/50" : "border-cyan-400/20"
+                          }`}
                           placeholder={
                             isSignUp ? "Create password" : "Enter password"
                           }
                           required
                         />
+                        {error && (
+                          <p className="text-red-400 text-xs mt-1 ml-1">
+                            {error}
+                          </p>
+                        )}
                       </div>
+                      {isSignUp && (
+                        <div className="mt-2">
+                          <PasswordRequirements
+                            password={password}
+                            onValidationChange={setIsPasswordValid}
+                          />
+                        </div>
+                      )}
                       {!isSignUp && (
                         <div className="text-right mt-2">
                           <button
@@ -259,8 +270,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
                     <button
                       type="submit"
-                      disabled={isLoading}
-                      className="w-full bg-cyan-400 text-black py-3 rounded-xl font-medium shadow-lg shadow-cyan-400/20 hover:shadow-cyan-400/30 hover:bg-cyan-300 transition-all disabled:opacity-70 mt-6"
+                      disabled={isLoading || (isSignUp && !isPasswordValid)}
+                      className={`w-full py-3 rounded-xl font-medium shadow-lg transition-all ${
+                        isLoading || (isSignUp && !isPasswordValid)
+                          ? "bg-cyan-400/50 text-black/50 cursor-not-allowed"
+                          : "bg-cyan-400 text-black shadow-cyan-400/20 hover:shadow-cyan-400/30 hover:bg-cyan-300"
+                      }`}
                     >
                       {isLoading ? (
                         <div className="flex items-center justify-center">
