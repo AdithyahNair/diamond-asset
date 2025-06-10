@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const Logo = () => (
-  <Link to="/" className="flex items-center">
+  <Link to="https://aquaduct.co" className="flex items-center">
     <div className="flex items-center">
       <img
         src="/images/aquaduct.png"

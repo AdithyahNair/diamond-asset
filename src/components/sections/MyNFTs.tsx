@@ -125,7 +125,7 @@ const MyNFTs = () => {
 
             if (purchase) {
               setSuccess(
-                `Successfully purchased NFT #${tokenId}! Connect your wallet to claim it.`
+                `Your Timeless Experience membership has been successfully activated! This membership comes with a unique digital token securely held by Aquaduct. If you'd like to add it to your personal web3 wallet, you can connect your wallet below.`
               );
               await checkNFTStatus();
               return;
