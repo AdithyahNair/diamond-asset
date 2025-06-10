@@ -1,15 +1,19 @@
 {
-  "name": "Turtle Timepiece Genesis #2",
-  "description": "Number 2 in the series of the Turtle Timepiece Collection. A timeless asset with historical significance.",
+  "name": "Timeless Experience #2",
+  "description": "A membership token that gives you access to a community of gem & jewelry lovers, collectors and industry experts. Be a part of history.",
   "image": "ipfs://bafybeihsdpkdbyyeaqkvilr4ikfl6aduuabofk4we5aqgocx5dnu56aqfa",
-  "animation_url": "ipfs://QmPvMK2GW1s9dfNN3aBV7MW41k9XshDDXY31VV81RhUYtr",
+  "animation_url": "ipfs://QmWZutZERQerpuB8AZsFW2Px5JurqvUaSizeJxwinvXQ8i",
   "animation_type": "video/mp4",
   "external_url": "https://ipfs.io/ipfs/QmPvMK2GW1s9dfNN3aBV7MW41k9XshDDXY31VV81RhUYtr",
   "background_color": "000000",
   "attributes": [
     {
+      "trait_type": "Collection",
+      "value": "Founding Member"
+    },
+    {
       "trait_type": "Serial Number",
-      "value": "TT-002-GEN"
+      "value": "TE-002"
     }
   ]
 }
