@@ -49,14 +49,14 @@ const Header = () => {
           const chainId = await window.ethereum.request({
             method: "eth_chainId",
           });
-          const sepoliaChainId = "0xaa36a7"; // Sepolia testnet
+          const mainnetChainId = "0x1"; // Ethereum mainnet
 
-          if (chainId !== sepoliaChainId) {
+          if (chainId !== mainnetChainId) {
             try {
-              // Try to switch to Sepolia
+              // Try to switch to mainnet
               await window.ethereum.request({
                 method: "wallet_switchEthereumChain",
-                params: [{ chainId: sepoliaChainId }],
+                params: [{ chainId: mainnetChainId }],
               });
             } catch (error: any) {
               if (error.code === 4902) {
@@ -65,15 +65,15 @@ const Header = () => {
                   method: "wallet_addEthereumChain",
                   params: [
                     {
-                      chainId: sepoliaChainId,
-                      chainName: "Sepolia Testnet",
+                      chainId: mainnetChainId,
+                      chainName: "Ethereum Mainnet",
                       nativeCurrency: {
                         name: "ETH",
                         symbol: "ETH",
                         decimals: 18,
                       },
-                      rpcUrls: ["https://sepolia.infura.io/v3/"],
-                      blockExplorerUrls: ["https://sepolia.etherscan.io"],
+                      rpcUrls: ["https://mainnet.infura.io/v3/"],
+                      blockExplorerUrls: ["https://etherscan.io"],
                     },
                   ],
                 });
@@ -81,8 +81,8 @@ const Header = () => {
             }
           }
 
-          setNetworkName("Sepolia Testnet");
-          setIsCorrectNetwork(chainId === sepoliaChainId);
+          setNetworkName("Ethereum Mainnet");
+          setIsCorrectNetwork(chainId === mainnetChainId);
         } catch (error) {
           console.error("Error checking network:", error);
           setNetworkName("Wrong Network");
