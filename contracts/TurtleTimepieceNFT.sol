@@ -14,6 +14,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
  */
 contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausable {
     using Counters for Counters.Counter;
+    using Strings for uint256;
     Counters.Counter private _tokenIds;
     
     // Maximum supply of NFTs
@@ -44,7 +45,7 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
     event ContractPaused(address indexed by);
     event ContractUnpaused(address indexed by);
     
-    constructor() ERC721("Diamond Access Ticket", "DIAMOND") {
+    constructor() ERC721("Timeless Experience, "Turle") {
         _baseTokenURI = "";
         // Pre-mint all NFTs to the contract owner
         address owner = _msgSender();
@@ -61,6 +62,57 @@ contract TurtleTimepieceNFT is ERC721URIStorage, Ownable, ReentrancyGuard, Pausa
      */
     function _baseURI() internal view override returns (string memory) {
         return _baseTokenURI;
+    }
+    
+    /**
+     * @dev Removes the "ipfs://" prefix from a string
+     */
+    function _removeIpfsPrefix(string memory str) internal pure returns (string memory) {
+        bytes memory strBytes = bytes(str);
+        require(strBytes.length >= 7 && 
+                strBytes[0] == "i" && 
+                strBytes[1] == "p" && 
+                strBytes[2] == "f" && 
+                strBytes[3] == "s" && 
+                strBytes[4] == ":" && 
+                strBytes[5] == "/" && 
+                strBytes[6] == "/", 
+                "Invalid IPFS URI");
+        
+        bytes memory result = new bytes(strBytes.length - 7);
+        for(uint i = 7; i < strBytes.length; i++) {
+            result[i-7] = strBytes[i];
+        }
+        return string(result);
+    }
+    
+    /**
+     * @dev Returns the URI for a given token ID with HTTP gateway URL
+     */
+    function tokenURI(uint256 tokenId) public view virtual override(ERC721URIStorage) returns (string memory) {
+        require(_exists(tokenId), "Token does not exist");
+        string memory baseURI = _baseURI();
+        if (bytes(baseURI).length == 0) {
+            return "";
+        }
+        
+        // If there's a specific URI set for this token, return that
+        string memory specificURI = super.tokenURI(tokenId);
+        if (bytes(specificURI).length > 0) {
+            return specificURI;
+        }
+        
+        // Otherwise construct the HTTP gateway URL
+        if (bytes(baseURI).length > 0) {
+            return string(abi.encodePacked(
+                "https://ipfs.io/ipfs/",
+                _removeIpfsPrefix(baseURI),
+                Strings.toString(tokenId),
+                ".json"
+            ));
+        }
+        
+        return "";
     }
     
     /**

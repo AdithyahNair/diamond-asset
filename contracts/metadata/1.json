@@ -1,6 +1,7 @@
 {
   "name": "Turtle Timepiece Genesis #1",
   "description": "Number 1 in the series of the Turtle Timepiece Collection. A timeless asset with historical significance.",
+  "image": "ipfs://bafybeihsdpkdbyyeaqkvilr4ikfl6aduuabofk4we5aqgocx5dnu56aqfa",
   "animation_url": "ipfs://QmPvMK2GW1s9dfNN3aBV7MW41k9XshDDXY31VV81RhUYtr",
   "animation_type": "video/mp4",
   "external_url": "https://ipfs.io/ipfs/QmPvMK2GW1s9dfNN3aBV7MW41k9XshDDXY31VV81RhUYtr",
@@ -13,6 +14,10 @@
     {
       "trait_type": "Media Type",
       "value": "Video NFT"
+    },
+    {
+      "trait_type": "Collection",
+      "value": "Genesis"
     }
   ],
   "properties": {
@@ -20,6 +25,10 @@
       {
         "uri": "ipfs://QmPvMK2GW1s9dfNN3aBV7MW41k9XshDDXY31VV81RhUYtr",
         "type": "video/mp4"
+      },
+      {
+        "uri": "ipfs://bafybeihsdpkdbyyeaqkvilr4ikfl6aduuabofk4we5aqgocx5dnu56aqfa",
+        "type": "image/png"
       }
     ],
     "category": "video"

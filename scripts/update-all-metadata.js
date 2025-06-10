@@ -3,6 +3,7 @@ const path = require("path");
 
 const metadataDir = path.join(__dirname, "../contracts/metadata");
 const videoCID = "QmPvMK2GW1s9dfNN3aBV7MW41k9XshDDXY31VV81RhUYtr";
+const thumbnailCID = "QmPvMK2GW1s9dfNN3aBV7MW41k9XshDDXY31VV81RhUYtr"; // Using video CID as thumbnail for now
 
 // Update all metadata files
 for (let i = 1; i <= 20; i++) {
@@ -14,6 +15,7 @@ for (let i = 1; i <= 20; i++) {
   const metadata = {
     name: `Turtle Timepiece Genesis #${i}`,
     description: `Number ${i} in the series of the Turtle Timepiece Collection. A timeless asset with historical significance.`,
+    image: `ipfs://${thumbnailCID}`, // Static image for MetaMask thumbnail
     animation_url: `ipfs://${videoCID}`,
     animation_type: "video/mp4",
     external_url: `https://ipfs.io/ipfs/${videoCID}`,

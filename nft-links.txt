@@ -1,0 +1,20 @@
+NFT Collection Links
+==================
+
+OpenSea Collection:
+https://opensea.io/collection/diamond-access-ticket
+
+Individual NFTs on OpenSea:
+Token #1: https://opensea.io/assets/ethereum/0xb069a4dF5c599C0bA4C155a16e10fD3BA843176F/1
+Token #2: https://opensea.io/assets/ethereum/0xb069a4dF5c599C0bA4C155a16e10fD3BA843176F/2
+(... and so on up to Token #20)
+
+Etherscan Contract:
+https://etherscan.io/token/0xb069a4dF5c599C0bA4C155a16e10fD3BA843176F
+
+Latest Transaction (baseURI update):
+https://etherscan.io/tx/0x4ca92f4c87065c0b56b7472dbdda0688eec575878d5e20dc513a7b3c6e0a9148
+
+IPFS Links:
+- Metadata: https://ipfs.io/ipfs/QmcVzGVX768bW2QULZR89baDcjhkFw5WYsoddZLiMwuk2z/1.json
+- Video: https://ipfs.io/ipfs/QmPvMK2GW1s9dfNN3aBV7MW41k9XshDDXY31VV81RhUYtr 
