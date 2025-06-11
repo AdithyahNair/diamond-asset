@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/adithyahnair/Downloads/project 19/contracts/TurtleTimepieceNFT.sol": {
-      "lastModificationDate": 1749481692499,
-      "contentHash": "e4a9a3dc5b4f53c83bb2032070e13aa6",
+      "lastModificationDate": 1749594609346,
+      "contentHash": "4e199381b70647cdce4d77c09e707edc",
       "sourceName": "contracts/TurtleTimepieceNFT.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -35,7 +35,8 @@
         "@openzeppelin/contracts/utils/Counters.sol",
         "@openzeppelin/contracts/utils/Strings.sol",
         "@openzeppelin/contracts/security/ReentrancyGuard.sol",
-        "@openzeppelin/contracts/security/Pausable.sol"
+        "@openzeppelin/contracts/security/Pausable.sol",
+        "hardhat/console.sol"
       ],
       "versionPragmas": [
         "^0.8.20"
@@ -753,6 +754,42 @@
       ],
       "artifacts": [
         "ReentrancyGuard"
+      ]
+    },
+    "/Users/adithyahnair/Downloads/project 19/node_modules/hardhat/console.sol": {
+      "lastModificationDate": 1745868652229,
+      "contentHash": "681c532e816169606d13a5fe8b475074",
+      "sourceName": "hardhat/console.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.4.22 <0.9.0"
+      ],
+      "artifacts": [
+        "console"
       ]
     }
   }

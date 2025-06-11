@@ -1,6 +1,8 @@
 import { ethers } from "ethers";
 import { NFT_CONTRACT_ADDRESS, NFT_CONTRACT_ABI } from "../lib/nftContract";
 import { supabase } from "../lib/supabase";
+import { addSubscriberToMailerLite } from "../lib/mailerlite";
+import type Stripe from "stripe";
 
 // Initialize provider and wallet
 const provider = new ethers.JsonRpcProvider(import.meta.env.VITE_RPC_URL);
@@ -11,16 +13,20 @@ const contract = new ethers.Contract(
   wallet
 );
 
-export async function handleStripeWebhook(event: any) {
+export async function handleStripeWebhook(event: Stripe.Event) {
   // Only handle successful payments
   if (event.type !== "checkout.session.completed") {
     return { success: true };
   }
 
   try {
-    const session = event.data.object;
+    const session = event.data.object as Stripe.Checkout.Session;
     const tokenId = session.metadata?.tokenId;
     const userEmail = session.customer_details?.email;
+    const userName = session.customer_details?.name || "";
+
+    // Split the name into first and last name
+    const [firstName = "", lastName = ""] = userName.split(" ");
 
     if (!tokenId || !userEmail) {
       throw new Error("Missing token ID or user email");
@@ -41,6 +47,15 @@ export async function handleStripeWebhook(event: any) {
       console.error("Error recording purchase:", purchaseError);
       throw purchaseError;
     }
+
+    // Add subscriber to MailerLite
+    await addSubscriberToMailerLite({
+      email: userEmail,
+      fields: {
+        name: firstName,
+        last_name: lastName,
+      },
+    });
 
     // Get the user's wallet address from Supabase
     const { data: userData, error: userError } = await supabase

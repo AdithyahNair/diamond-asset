@@ -18,13 +18,6 @@ async function main() {
   const blockConfirmations = 6;
   await nft.deploymentTransaction().wait(blockConfirmations);
 
-  // Set the base URI
-  const baseURI = "ipfs://QmdeWAdt3NxbzRRAM6hdw8pxemgFY8Eje4jjZvZDFe5bni/";
-  console.log("Setting base URI to:", baseURI);
-  const tx = await nft.setBaseURI(baseURI);
-  await tx.wait(2); // Wait for 2 block confirmations
-  console.log("Base URI set successfully!");
-
   // Verify the contract on Etherscan
   console.log("Verifying contract on Etherscan...");
   try {
@@ -48,16 +41,10 @@ async function main() {
   const contractInfo = {
     address: address,
     abi: artifact.abi,
-    baseURI: baseURI,
   };
 
   fs.writeFileSync("contract-info.json", JSON.stringify(contractInfo, null, 2));
   console.log("Contract information saved to contract-info.json");
-
-  // Verify the metadata is accessible
-  console.log("\nVerifying metadata accessibility...");
-  const tokenURI = await nft.tokenURI(1);
-  console.log("Token #1 URI:", tokenURI);
 }
 
 main()
