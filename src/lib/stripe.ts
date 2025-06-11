@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { supabase } from "./supabase";
+import { addSubscriberToMailerLite } from "./mailerlite";
 
 // We don't need to redeclare Window interface as it's already defined in lib.dom.d.ts
 // Instead, we'll use the existing window.location.origin directly
@@ -244,6 +245,10 @@ export const verifyPayment = async (sessionId: string) => {
     const tokenId = session.metadata?.tokenId;
     const userEmail = session.customer_details?.email;
     const userId = session.metadata?.userId;
+    const userName = session.customer_details?.name || "";
+
+    // Split the name into first and last name
+    const [firstName = "", lastName = ""] = userName.split(" ");
 
     if (!tokenId || !userEmail) {
       throw new Error("Missing token ID or user email in session");
@@ -278,6 +283,29 @@ export const verifyPayment = async (sessionId: string) => {
     if (purchaseError) {
       console.error("Error recording purchase:", purchaseError);
       throw purchaseError;
+    }
+
+    // Add subscriber to MailerLite
+    console.log("Adding subscriber to MailerLite...", {
+      email: userEmail,
+      firstName,
+      lastName,
+      hasName: !!userName,
+      nameLength: userName.length,
+    });
+
+    const mailerLiteResult = await addSubscriberToMailerLite({
+      email: userEmail,
+      fields: {
+        name: firstName,
+        last_name: lastName,
+      },
+    });
+
+    console.log("MailerLite subscription result:", mailerLiteResult);
+
+    if (!mailerLiteResult) {
+      console.error("Failed to add subscriber to MailerLite");
     }
 
     // Update user_profiles if userId exists

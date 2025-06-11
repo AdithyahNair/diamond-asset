@@ -1,7 +1,6 @@
 import { ethers } from "ethers";
 import { NFT_CONTRACT_ADDRESS, NFT_CONTRACT_ABI } from "../lib/nftContract";
 import { supabase } from "../lib/supabase";
-import { addSubscriberToMailerLite } from "../lib/mailerlite";
 import type Stripe from "stripe";
 
 // Initialize provider and wallet
@@ -14,25 +13,32 @@ const contract = new ethers.Contract(
 );
 
 export async function handleStripeWebhook(event: Stripe.Event) {
+  console.log("Webhook received:", event.type);
+
   // Only handle successful payments
   if (event.type !== "checkout.session.completed") {
+    console.log("Skipping - not a completed checkout session");
     return { success: true };
   }
 
   try {
     const session = event.data.object as Stripe.Checkout.Session;
+    console.log("Processing checkout session:", {
+      sessionId: session.id,
+      customerEmail: session.customer_details?.email,
+      customerName: session.customer_details?.name,
+    });
+
     const tokenId = session.metadata?.tokenId;
     const userEmail = session.customer_details?.email;
-    const userName = session.customer_details?.name || "";
-
-    // Split the name into first and last name
-    const [firstName = "", lastName = ""] = userName.split(" ");
 
     if (!tokenId || !userEmail) {
+      console.error("Missing required data:", { tokenId, userEmail });
       throw new Error("Missing token ID or user email");
     }
 
     // First record the purchase in Supabase
+    console.log("Recording purchase in Supabase...");
     const { error: purchaseError } = await supabase
       .from("nft_purchases")
       .upsert({
@@ -47,15 +53,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
       console.error("Error recording purchase:", purchaseError);
       throw purchaseError;
     }
-
-    // Add subscriber to MailerLite
-    await addSubscriberToMailerLite({
-      email: userEmail,
-      fields: {
-        name: firstName,
-        last_name: lastName,
-      },
-    });
+    console.log("Purchase recorded successfully");
 
     // Get the user's wallet address from Supabase
     const { data: userData, error: userError } = await supabase
@@ -67,6 +65,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
     // If user has a wallet connected, mark the token as pre-purchased
     if (!userError && userData?.wallet_address) {
       try {
+        console.log("Marking token as pre-purchased...");
         const tx = await contract.markTokenAsPrePurchased(
           tokenId,
           userData.wallet_address
