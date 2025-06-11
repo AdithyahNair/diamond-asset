@@ -709,7 +709,7 @@ const CollectionDetails: React.FC = () => {
                       Only 20 passes available
                     </div>
                     <div className="text-sm text-yellow-400/80 mt-2">
-                      Offer ends June 23rd or when first 20 passes are sold,
+                      Offer ends July 8th or when first 20 passes are sold,
                       whichever comes first
                     </div>
                   </div>
