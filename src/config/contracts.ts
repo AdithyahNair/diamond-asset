@@ -1,5 +1,5 @@
 export const CONTRACT_ADDRESSES = {
-  mainnet: "0xb069a4df5c599c0ba4c155a16e10fd3ba843176f",
+  mainnet: "0x41a5D2AF36A98cC2b29b7a950025aE18A44548D8",
   sepolia: "0x2d6B119cBcaB787cE7a4D3e3b2670Be540685855",
 };
 
