@@ -1,5 +1,5 @@
 {
-  "address": "0xb069a4dF5c599C0bA4C155a16e10fD3BA843176F",
+  "address": "0x1b50E6DaE225a39F92ab1AB152bc3608457Bf6cF",
   "abi": [
     {
       "inputs": [],
@@ -662,19 +662,6 @@
     {
       "inputs": [
         {
-          "internalType": "string",
-          "name": "baseURI",
-          "type": "string"
-        }
-      ],
-      "name": "setBaseURI",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "uint256",
           "name": "newPrice",
           "type": "uint256"
@@ -816,6 +803,5 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-  ],
-  "baseURI": "ipfs://QmdeWAdt3NxbzRRAM6hdw8pxemgFY8Eje4jjZvZDFe5bni/"
+  ]
 }

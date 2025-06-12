@@ -649,7 +649,7 @@ const CollectionDetails: React.FC = () => {
               className="inline-flex items-center text-white/60 hover:text-cyan-400 mb-8 transition-colors"
             >
               <ArrowLeft size={20} className="mr-2" />
-              Back to Home
+              Timeless Experience
             </Link>
           </motion.div>
 

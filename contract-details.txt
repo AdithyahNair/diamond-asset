@@ -1,11 +1,11 @@
 NFT Contract Details
 ==================
 
-Contract Address (Mainnet):
-0xb069a4dF5c599C0bA4C155a16e10fD3BA843176F
+Contract Address (Sepolia Testnet):
+0x0f70d9746C30Ed514707C36C656272445254B292
 
 Etherscan Link:
-https://etherscan.io/address/0xb069a4dF5c599C0bA4C155a16e10fD3BA843176F
+https://sepolia.etherscan.io/address/0x0f70d9746C30Ed514707C36C656272445254B292
 
 Contract Details:
 - Total NFTs: 20

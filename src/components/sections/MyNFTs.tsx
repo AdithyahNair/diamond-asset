@@ -11,11 +11,12 @@ import {
 } from "../../lib/nftContract";
 import { verifyPayment } from "../../lib/stripe";
 import { ethers } from "ethers";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "../../lib/supabase";
 import { recordMintedNFT } from "../../lib/supabase";
 import { markTokenAsPrePurchased } from "../../api/mark-token-prepurchased";
+import { ArrowLeft } from "lucide-react";
 
 const MyNFTs = () => {
   const { user, isWalletConnected, connectWallet, walletAddress } = useAuth();
@@ -271,6 +272,22 @@ const MyNFTs = () => {
   return (
     <div className="min-h-screen bg-black pt-32 pb-16">
       <div className="container mx-auto px-6">
+        {/* Back Button */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <Link
+            to="/"
+            className="inline-flex items-center text-white/70 hover:text-cyan-400 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            <span>Timeless Experience</span>
+          </Link>
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
