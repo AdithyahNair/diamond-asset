@@ -20,7 +20,7 @@
     "solidity"
   ],
   "author": "",
-  "license": "MIT",
+  "license": "",
   "devDependencies": {
     "@eslint/js": "^9.9.1",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
