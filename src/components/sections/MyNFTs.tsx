@@ -79,7 +79,9 @@ const MyNFTs = () => {
       setPurchasedNFTs(unclaimed);
     } catch (err) {
       console.error("Error checking NFT status:", err);
-      setError("Failed to load your NFTs. Please try refreshing the page.");
+      setError(
+        "Failed to load your Memberships. Please try refreshing the page."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -137,7 +139,7 @@ const MyNFTs = () => {
 
           // If we get here, webhook hasn't processed yet
           setSuccess(
-            `Payment received! Please wait a moment for your NFT to appear.`
+            `Payment received! Please wait a moment for your Digital Pass to appear.`
           );
         } catch (err) {
           console.error("Error processing Stripe payment:", err);
@@ -153,97 +155,12 @@ const MyNFTs = () => {
     handleStripeRedirect();
   }, [searchParams, user]);
 
-  const handleClaim = async (tokenId: number) => {
-    if (!isWalletConnected) {
-      connectWallet();
-      return;
-    }
-
-    if (!user?.email || !walletAddress) {
-      setError("Please connect your wallet to claim NFTs");
-      return;
-    }
-
-    setIsClaiming((prev) => ({ ...prev, [tokenId]: true }));
-    setError(null);
+  const handleClaim = () => {
     setSuccess(null);
-
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-
-      // First check if the token is already marked as pre-purchased for this wallet
-      const contract = await getNftContract(provider);
-      const prePurchaser = await contract.getPrePurchaser(tokenId);
-
-      if (prePurchaser === ethers.ZeroAddress) {
-        // Token not marked as pre-purchased yet, let's mark it
-        // Update the user's wallet address in Supabase
-        const { data: userData, error: userError } = await supabase
-          .from("user_profiles")
-          .select("wallet_address")
-          .eq("email", user.email)
-          .single();
-
-        if (userError) {
-          throw new Error("Failed to fetch user profile");
-        }
-
-        // Only update if the wallet address has changed or is not set
-        if (
-          !userData?.wallet_address ||
-          userData.wallet_address.toLowerCase() !== walletAddress.toLowerCase()
-        ) {
-          const { error: updateError } = await supabase
-            .from("user_profiles")
-            .update({ wallet_address: walletAddress })
-            .eq("email", user.email);
-
-          if (updateError) {
-            throw new Error("Failed to update wallet address");
-          }
-        }
-
-        try {
-          await markTokenAsPrePurchased(tokenId, user.email, walletAddress);
-          // Show a message that we're waiting for the token to be marked
-          setSuccess(
-            "Your wallet has been registered. Please wait a few minutes for the token to be marked as pre-purchased, then try claiming again."
-          );
-          return;
-        } catch (error) {
-          throw new Error("Failed to mark token as pre-purchased");
-        }
-      }
-
-      // Now try to claim the token
-      const result = await claimStripePurchasedNFT(signer, tokenId, user.email);
-
-      if (result.success) {
-        // Record the mint in database
-        await recordMintedNFT(user.email, walletAddress, tokenId);
-
-        setSuccess(`Successfully claimed NFT #${tokenId}!`);
-        // Update the lists immediately
-        setClaimedNFTs((prev) => [...prev, tokenId]);
-        setPurchasedNFTs((prev) => prev.filter((id) => id !== tokenId));
-      } else {
-        setError(result.error || "Failed to claim NFT");
-      }
-    } catch (err) {
-      console.error("Error claiming NFT:", err);
-      setError(
-        (err as Error).message === "Failed to fetch user profile"
-          ? "Failed to fetch your profile. Please try again."
-          : (err as Error).message === "Failed to update wallet address"
-          ? "Failed to update your wallet address. Please try again."
-          : (err as Error).message === "Failed to mark token as pre-purchased"
-          ? "Failed to register your wallet. Please try again in a few minutes."
-          : "Failed to claim NFT. Please try again."
-      );
-    } finally {
-      setIsClaiming((prev) => ({ ...prev, [tokenId]: false }));
-    }
+    setError(null);
+    setSuccess(
+      "To claim your Digital Pass, please contact Viral Kothari @ viralkothari91@gmail.com"
+    );
   };
 
   if (!user) {
@@ -295,8 +212,29 @@ const MyNFTs = () => {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 p-4 bg-cyan-400/10 border border-cyan-400/20 rounded-xl text-cyan-400 text-sm"
+            className="mb-6 p-4 bg-cyan-400/10 border border-cyan-400/20 rounded-xl text-cyan-400 text-sm relative"
           >
+            <button
+              onClick={() => setSuccess(null)}
+              className="absolute top-4 right-4 text-cyan-400/60 hover:text-cyan-400 transition-colors"
+              aria-label="Close"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 4L12 12M12 4L4 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
             {success}
           </motion.div>
         )}
@@ -308,7 +246,7 @@ const MyNFTs = () => {
             className="text-center py-16"
           >
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto"></div>
-            <p className="text-white/60 mt-4">Loading your NFTs...</p>
+            <p className="text-white/60 mt-4">Loading your Memberships...</p>
           </motion.div>
         ) : purchasedNFTs.length === 0 && claimedNFTs.length === 0 ? (
           <motion.div
@@ -397,15 +335,10 @@ const MyNFTs = () => {
                     </div>
                   ) : (
                     <button
-                      onClick={() => handleClaim(tokenId)}
-                      disabled={isClaiming[tokenId]}
-                      className={`w-full py-3 px-4 rounded-xl transition-all duration-300 ${
-                        isClaiming[tokenId]
-                          ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
-                          : "bg-cyan-400 hover:bg-cyan-300 text-black shadow-lg shadow-cyan-400/20 hover:shadow-cyan-400/30"
-                      }`}
+                      onClick={handleClaim}
+                      className="w-full py-3 px-4 rounded-xl transition-all duration-300 bg-cyan-400 hover:bg-cyan-300 text-black shadow-lg shadow-cyan-400/20 hover:shadow-cyan-400/30"
                     >
-                      {isClaiming[tokenId] ? "Claiming..." : "Claim NFT"}
+                      Claim NFT
                     </button>
                   )}
                 </div>
