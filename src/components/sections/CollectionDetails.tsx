@@ -701,7 +701,7 @@ const CollectionDetails: React.FC = () => {
                         $488
                       </span>
                       <span className="text-2xl font-serif text-white">
-                        $288
+                        $488
                       </span>
                       <span className="text-sm text-cyan-400">Early Bird</span>
                     </div>

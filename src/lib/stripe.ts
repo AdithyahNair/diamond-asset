@@ -11,7 +11,7 @@ const stripe = new Stripe(import.meta.env.VITE_STRIPE_SECRET_KEY || "", {
 });
 
 // Price in cents (USD)
-const PRICE = 28800; // $2.00
+const PRICE = 48800; // $2.00
 
 // Allowed webhook events
 const allowedEvents: Stripe.Event.Type[] = [
