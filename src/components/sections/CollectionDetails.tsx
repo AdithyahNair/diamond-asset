@@ -709,8 +709,9 @@ const CollectionDetails: React.FC = () => {
                       Only 20 passes available
                     </div>
                     <div className="text-sm text-yellow-400/80 mt-2">
-                      Offer ends July 8th or when first 20 passes are sold,
-                      whichever comes first
+                      Be one of the first 20 members to lock in early bird
+                      pricing. The remaining 68 passes will be released at a
+                      higher tier price.
                     </div>
                   </div>
                   {(user?.email || isWalletConnected) && (
