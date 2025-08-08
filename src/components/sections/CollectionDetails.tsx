@@ -697,9 +697,6 @@ const CollectionDetails: React.FC = () => {
                   <div>
                     <div className="text-white/60 text-sm mb-1">Price</div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-serif text-white/40 line-through">
-                        $488
-                      </span>
                       <span className="text-2xl font-serif text-white">
                         $488
                       </span>
