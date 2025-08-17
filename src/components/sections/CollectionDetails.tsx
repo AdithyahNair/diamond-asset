@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { ArrowLeft, RefreshCw, X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../../contexts/AuthContext";
@@ -28,7 +28,6 @@ const CollectionDetails: React.FC = () => {
   const [networkName, setNetworkName] = useState<string>("Unknown");
   const [paymentMethod, setPaymentMethod] = useState<"crypto" | "card">("card");
   const [isProcessingCardPayment, setIsProcessingCardPayment] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const {
@@ -66,7 +65,6 @@ const CollectionDetails: React.FC = () => {
 
   const fetchAvailable = async () => {
     try {
-      setIsLoading(true);
       let availableCount = 0;
       let tokens: number[] = [];
 
@@ -118,8 +116,6 @@ const CollectionDetails: React.FC = () => {
       setAvailable(0);
       setAvailableTokens([]);
       setSelectedTokenId(null);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -130,7 +126,6 @@ const CollectionDetails: React.FC = () => {
       setAvailableTokens([]);
       setSelectedTokenId(null);
       setError("Please login or connect wallet to view available NFTs");
-      setIsLoading(false);
     }
   }, [user?.email, isWalletConnected]);
 
@@ -477,10 +472,6 @@ const CollectionDetails: React.FC = () => {
     );
   };
 
-  const handleRefreshCount = () => {
-    fetchAvailable();
-  };
-
   // Add new payment flow handlers
   const handleBuyNowClick = () => {
     if (!user?.email && !isWalletConnected) {
@@ -693,49 +684,18 @@ const CollectionDetails: React.FC = () => {
                 <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-cyan-400/30" />
                 <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-cyan-400/30" />
 
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <div className="text-white/60 text-sm mb-1">Price</div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-serif text-white">
-                        $488
-                      </span>
-                      <span className="text-sm text-cyan-400">Early Bird</span>
-                    </div>
-                    <div className="text-sm text-white/60 mt-1">
-                      Only 20 passes available
-                    </div>
-                    <div className="text-sm text-yellow-400/80 mt-2">
-                      Be one of the first 20 members to lock in early bird
-                      pricing. The remaining 68 passes will be released at a
-                      higher tier price.
-                    </div>
+                <div className="mb-6">
+                  <div className="text-white/60 text-sm mb-1">Price</div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-serif text-white">$488</span>
+                    <span className="text-lg text-white/40 line-through">
+                      $888
+                    </span>
+                    <span className="text-sm text-cyan-400">Early Bird</span>
                   </div>
-                  {(user?.email || isWalletConnected) && (
-                    <div className="text-right">
-                      <div className="text-white/60 text-sm mb-1">
-                        Available
-                      </div>
-                      <div className="text-xl font-serif text-white flex items-center justify-end">
-                        {isLoading ? (
-                          <span>Loading...</span>
-                        ) : (
-                          <div className="flex items-center">
-                            {available} remaining
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={handleRefreshCount}
-                              className="ml-2 p-1 rounded-full hover:bg-cyan-400/10 text-cyan-400"
-                              title="Refresh count"
-                            >
-                              <RefreshCw size={16} />
-                            </motion.button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <div className="text-sm text-white/60 mt-1">
+                    The first 20 passes are available at the early bird price.
+                  </div>
                 </div>
 
                 <div className="mb-6">
@@ -761,19 +721,19 @@ const CollectionDetails: React.FC = () => {
                   onClick={handleBuyNowClick}
                   disabled={
                     isPurchasing ||
-                    (available <= 0 && (user?.email || isWalletConnected))
+                    (available <= 0 && !!(user?.email || isWalletConnected))
                   }
                   className={`w-full py-3 px-6 rounded-xl font-medium transition-all ${
                     isPurchasing
                       ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
-                      : available <= 0 && (user?.email || isWalletConnected)
+                      : available <= 0 && !!(user?.email || isWalletConnected)
                       ? "bg-cyan-400/20 text-cyan-400/60 cursor-not-allowed"
                       : "bg-cyan-400 hover:bg-cyan-300 text-black"
                   }`}
                 >
                   {isPurchasing
                     ? "Processing..."
-                    : available <= 0 && (user?.email || isWalletConnected)
+                    : available <= 0 && !!(user?.email || isWalletConnected)
                     ? "Sold Out"
                     : "Buy Now"}
                 </motion.button>
